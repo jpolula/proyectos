@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="es">
+<head>
+<link rel="stylesheet" type="text/css" href="base.css" />
+<link rel="stylesheet" type="text/css" href="content.css" />
+<link rel="stylesheet" type="text/css" href="nav.css" />
+<meta http-equiv="content-type" content="text/html;  charset=utf-8" />
+<title>Variables de entorno | MODULO 7 </title>
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+<meta name="author" content="JAVI" />
+<link rel="license" type="text/html" href="http://creativecommons.org/licenses/by-sa/4.0/" />
+<meta name="generator" content="eXeLearning 2.8.1 - exelearning.net" />
+<!--[if lt IE 9]><script type="text/javascript" src="exe_html5.js"></script><![endif]-->
+<script type="text/javascript" src="exe_jquery.js"></script>
+<script type="text/javascript" src="common_i18n.js"></script>
+<script type="text/javascript" src="common.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body class="exe-web-site" id="exe-node-1"><script type="text/javascript">document.body.className+=" js"</script>
+<div id="content">
+<p id="skipNav"><a href="#main" class="sr-av">Saltar la navegación</a></p>
+<header id="header" ><div id="headerContent">MODULO 7</div></header>
+<nav id="siteNav">
+<ul>
+   <li><a href="index.html" class="daddy main-node">Despliegues parametrizados</a></li>
+   <li id="active"><a href="variables_de_entorno.html" class="active no-ch">Variables de entorno</a></li>
+   <li><a href="configmaps.html" class="no-ch">ConfigMaps</a></li>
+   <li><a href="secrets.html" class="no-ch">Secrets</a></li>
+   <li><a href="ejemplo_completo_despliegue_y_acceso_a_wordpress__mariadb.html" class="no-ch">Ejemplo completo: Despliegue y acceso a Wordpress + MariaDB</a></li>
+   <li><a href="crditos.html" class="no-ch">Créditos</a></li>
+</ul>
+</nav>
+<div id='topPagination'>
+<nav class="pagination noprt">
+<a href="index.html" class="prev"><span><span>&laquo; </span>Anterior</span></a> <span class="sep">| </span><a href="configmaps.html" class="next"><span>Siguiente<span> &raquo;</span></span></a>
+</nav>
+</div>
+<div id="main-wrapper">
+<section id="main">
+<header id="nodeDecoration"><h1 id="nodeTitle">Variables de entorno</h1></header>
+<article class="iDevice_wrapper textIdevice" id="id1">
+<div class="iDevice emphasis0" >
+<div id="ta1_113_2" class="block iDevice_content">
+<div class="exe-text"><p>Para añadir alguna configuración específica a la hora de lanzar un contenedor, se usan variables de entorno del contenedor cuyos valores se especifican al crear el contenedor para realizar una configuración concreta del mismo.</p>
+<p>Por ejemplo, si estudiamos la documentación de la imagen <code>mariadb</code> en <a href="https://hub.docker.com/_/mariadb" rel="nofollow">Docker Hub</a>, podemos comprobar que podemos definir un conjunto de variables de entorno como <code>MYSQL_ROOT_PASSWORD</code>, <code>MYSQL_DATABASE</code>, <code>MYSQL_USER</code>, <code>MYSQL_PASSWORD</code>, etc., que nos permitirán configurar de alguna forma determinada nuestro servidor de base de datos (indicando la contraseña del usuario root, creando una determinada base de datos o creando un usuario con una contraseña por ejemplo.</p>
+<p>De la misma manera, al especificar los contenedores que contendrán los Pods que se van a crear desde un Deployment, también se pondrán inicializar las variables de entorno necesarias.</p>
+<h2>Configuración de aplicaciones usando variables de entorno</h2>
+<p>Vamos a hacer un despliegue de un servidor de base de datos mariadb. Si volvemos a estudiar la documentación de esta imagen en <a href="https://hub.docker.com/_/mariadb" rel="nofollow">Docker Hub</a> comprobamos que obligatoriamente tenemos que indicar la contraseña del usuario root inicializando la variable de entorno <code>MYSQL_ROOT_PASSWORD</code>. El fichero de despliegue que vamos a usar es <code><a href="mariadb-deployment-env.yaml">mariadb-deployment-env.yaml</a></code>, y vemos el fragmento del fichero donde se define el contenedor:</p>
+<div class="highlight highlight-source-yaml position-relative">
+<pre>...
+    <span class="pl-ent">spec</span>:
+      <span class="pl-ent">containers</span>:
+        - <span class="pl-ent">name</span>: <span class="pl-s">contenedor-mariadb</span>
+          <span class="pl-ent">image</span>: <span class="pl-s">mariadb</span>
+          <span class="pl-ent">ports</span>:
+            - <span class="pl-ent">containerPort</span>: <span class="pl-c1">3306</span>
+              <span class="pl-ent">name</span>: <span class="pl-s">db-port</span>
+          <span class="pl-ent">env</span>:
+            - <span class="pl-ent">name</span>: <span class="pl-s">MYSQL_ROOT_PASSWORD</span>
+              <span class="pl-ent">value</span>: <span class="pl-s">my-password</span></pre>
+</div>
+<p>En el apartado <code>containers</code> hemos incluido la sección <code>env</code> donde vamos indicando, como una lista, el nombre de la variable (<code>name</code>) y su valor (<code>value</code>). En este caso hemos indicado la contraseña <code>my-password</code>.</p>
+<p>Vamos a comprobar si realmente se ha creado el servidor de base de datos con esa contraseña del root:</p>
+<div class="snippet-clipboard-content position-relative">
+<pre><code>kubectl apply -f mariadb-deploymen-env.yaml
+
+kubectl get all
+...
+NAME                                 READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/mariadb-deployment   1/1     1            1           5s
+
+kubectl exec -it deployment.apps/mariadb-deployment -- mysql -u root -p
+Enter password:
+...
+MariaDB [(none)]&gt;
+</code></pre>
+</div></div>
+</div>
+</div>
+</article>
+<article class="iDevice_wrapper textIdevice em_iDevice em_iDevice_reproduccion" id="id9">
+<div class="iDevice emphasis1" >
+<header class="iDevice_header"><h1 class="iDeviceTitle">Vídeo: Variables de entorno</h1></header>
+<div class="iDevice_inner">
+<div class="iDevice_content_wrapper">
+<div id="ta9_124_2" class="block iDevice_content">
+<div class="exe-text"><figure class="exe-figure exe-media position-center" style="width: 800px;"><iframe width="800" height="449" src="https://www.youtube.com/embed/MazyA8LP8Oc" allowfullscreen="allowfullscreen" data-mce-fragment="1"></iframe>
+<figcaption class="figcaption"><span class="title"><em>Vídeo: Variables de entorno</em></span></figcaption>
+</figure>
+<p></p></div>
+</div>
+</div>
+</div>
+</div>
+</article>
+<div id="packageLicense" class="cc cc-by-sa">
+<p><span>Obra publicada con</span> <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Licencia Creative Commons Reconocimiento Compartir igual 4.0</a></p>
+</div>
+</section>
+</div>
+<div id='bottomPagination'>
+<nav class="pagination noprt">
+<a href="index.html" class="prev"><span><span>&laquo; </span>Anterior</span></a> <span class="sep">| </span><a href="configmaps.html" class="next"><span>Siguiente<span> &raquo;</span></span></a>
+</nav>
+</div>
+</div>
+<p id="made-with-eXe"><a href="https://exelearning.net/" target="_blank" rel="noopener"><span>Creado con eXeLearning<span> (Ventana nueva)</span></span></a></p><script type="text/javascript" src="_intef_js.js"></script></body></html>

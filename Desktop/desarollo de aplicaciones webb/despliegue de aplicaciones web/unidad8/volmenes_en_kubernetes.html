@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="es">
+<head>
+<link rel="stylesheet" type="text/css" href="base.css" />
+<link rel="stylesheet" type="text/css" href="content.css" />
+<link rel="stylesheet" type="text/css" href="nav.css" />
+<meta http-equiv="content-type" content="text/html;  charset=utf-8" />
+<title>Volúmenes en Kubernetes | MODULO 8 </title>
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+<meta name="author" content="JAVI" />
+<link rel="license" type="text/html" href="http://creativecommons.org/licenses/by-sa/4.0/" />
+<meta name="generator" content="eXeLearning 2.8.1 - exelearning.net" />
+<!--[if lt IE 9]><script type="text/javascript" src="exe_html5.js"></script><![endif]-->
+<script type="text/javascript" src="exe_jquery.js"></script>
+<script type="text/javascript" src="common_i18n.js"></script>
+<script type="text/javascript" src="common.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body class="exe-web-site" id="exe-node-1"><script type="text/javascript">document.body.className+=" js"</script>
+<div id="content">
+<p id="skipNav"><a href="#main" class="sr-av">Saltar la navegación</a></p>
+<header id="header" ><div id="headerContent">MODULO 8</div></header>
+<nav id="siteNav">
+<ul>
+   <li><a href="index.html" class="daddy main-node">Almacenamiento en Kubernetes</a></li>
+   <li id="active"><a href="volmenes_en_kubernetes.html" class="active no-ch">Volúmenes en Kubernetes</a></li>
+   <li><a href="aprovisionamiento_de_volmenes.html" class="no-ch">Aprovisionamiento de volúmenes</a></li>
+   <li><a href="solicitud_de_volmenes.html" class="no-ch">Solicitud de volúmenes</a></li>
+   <li><a href="uso_de_volmenes.html" class="no-ch">Uso de volúmenes</a></li>
+   <li><a href="ejemplo_1_gestin_esttica_de_volmenes.html" class="no-ch">Ejemplo 1: Gestión estática de volúmenes</a></li>
+   <li><a href="ejemplo_2_gestin_dinmica_de_volmenes.html" class="no-ch">Ejemplo 2: Gestión dinámica de volúmenes</a></li>
+   <li><a href="ejemplo_3_wordpress_con_almacenamiento_persistente.html" class="no-ch">Ejemplo 3: Wordpress con almacenamiento persistente</a></li>
+   <li><a href="crditos.html" class="no-ch">Créditos</a></li>
+</ul>
+</nav>
+<div id='topPagination'>
+<nav class="pagination noprt">
+<a href="index.html" class="prev"><span><span>&laquo; </span>Anterior</span></a> <span class="sep">| </span><a href="aprovisionamiento_de_volmenes.html" class="next"><span>Siguiente<span> &raquo;</span></span></a>
+</nav>
+</div>
+<div id="main-wrapper">
+<section id="main">
+<header id="nodeDecoration"><h1 id="nodeTitle">Volúmenes en Kubernetes</h1></header>
+<article class="iDevice_wrapper textIdevice" id="id1">
+<div class="iDevice emphasis0" >
+<div id="ta1_134_2" class="block iDevice_content">
+<div class="exe-text"><h2>Tipos de volúmenes</h2>
+<p>Los <a href="https://kubernetes.io/docs/concepts/storage/volumes/" rel="nofollow">volúmenes</a> nos permiten proporcional almacenamiento a los Pods, y podemos usar distintos tipos que nos ofrecen distintas características:</p>
+<ul>
+<li>Proporcionados por proveedores de cloud: AWS, Azure, GCE, OpenStack, etc</li>
+<li>Propios de Kubernetes:
+<ul>
+<li>configMap: Para usar un configMap como un directorio desde el Pod.</li>
+<li>emptyDir: Volumen efímero con la misma vida que el Pod. Usado como almacenamiento secundario o para compartir entre contenedores del mismo Pod.</li>
+<li>hostPath: Monta un directorio del host en el Pod (usado excepcionalmente, pero es el que nosotros vamos a usar con minikube).</li>
+<li>...</li>
+</ul>
+</li>
+<li>Habituales en despliegues "on premises": glusterfs, cephfs, iscsi, nfs, etc.</li>
+</ul>
+<h2>Trabajando con volúmenes</h2>
+<p>Al trabajar con volúmenes en Kubernetes se realizan dos funciones claramente diferenciadas:</p>
+<ul>
+<li>
+<p><strong>Desde el punto de vista del administrador del cluster de Kubernetes:</strong></p>
+<p>El administrador es el responsable de la gestión del almacenamiento en el clúster de k8s. Proporciona almacenamiento a las aplicaciones, entrando a detalle en configurar los diferentes mecanismo, bien proporcionados por el proveedor de cloud o configurados directamente. Para ello gestiona los recursos del cluster llamados PersistentVolume o StorageClasses. Ejemplos:</p>
+<ul>
+<li>Configurar Azure Disk para que pueda usarlo k8s.</li>
+<li>Configurar Cephfs o RBD en la red local para usarlo en k8s.</li>
+</ul>
+</li>
+<li>
+<p><strong>Desde el punto de vista del desarrollador de aplicaciones que van a ser ejecutadas en el cluster de Kubernetes:</strong></p>
+<p>A los desarrolladores de aplicaciones les interesa más la disponibilidad y las características del almacenamiento que los detalles sobre el mecanismo de almacenamiento. Para solicitar almacenamiento se va a utilizar el recurso del cluster PersistentVolumeClaim. Ejemplos:</p>
+<ul>
+<li>Quiero 20 GiB de almacenamiento permanente que pueda compartir entre varios Pods de varios nodos en modo lectura.</li>
+<li>Quiero 10 GiB de almacenamiento provisional para usar desde un Pod en modo lectura y escritura.</li>
+</ul>
+</li>
+</ul></div>
+</div>
+</div>
+</article>
+<article class="iDevice_wrapper textIdevice em_iDevice em_iDevice_reproduccion" id="id17">
+<div class="iDevice emphasis1" >
+<header class="iDevice_header"><h1 class="iDeviceTitle">Vídeo: Volúmenes en Kubernetes</h1></header>
+<div class="iDevice_inner">
+<div class="iDevice_content_wrapper">
+<div id="ta17_134_2" class="block iDevice_content">
+<div class="exe-text"><figure class="exe-figure exe-media position-center" style="width: 800px;"><iframe width="800" height="449" src="https://www.youtube.com/embed/g1Elyt_OuqA" allowfullscreen="allowfullscreen" data-mce-fragment="1"></iframe>
+<figcaption class="figcaption"><span class="title"><em>Vídeo: Volúmenes en Kubernetes</em></span></figcaption>
+</figure>
+<p></p></div>
+</div>
+</div>
+</div>
+</div>
+</article>
+<div id="packageLicense" class="cc cc-by-sa">
+<p><span>Obra publicada con</span> <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Licencia Creative Commons Reconocimiento Compartir igual 4.0</a></p>
+</div>
+</section>
+</div>
+<div id='bottomPagination'>
+<nav class="pagination noprt">
+<a href="index.html" class="prev"><span><span>&laquo; </span>Anterior</span></a> <span class="sep">| </span><a href="aprovisionamiento_de_volmenes.html" class="next"><span>Siguiente<span> &raquo;</span></span></a>
+</nav>
+</div>
+</div>
+<p id="made-with-eXe"><a href="https://exelearning.net/" target="_blank" rel="noopener"><span>Creado con eXeLearning<span> (Ventana nueva)</span></span></a></p><script type="text/javascript" src="_intef_js.js"></script></body></html>

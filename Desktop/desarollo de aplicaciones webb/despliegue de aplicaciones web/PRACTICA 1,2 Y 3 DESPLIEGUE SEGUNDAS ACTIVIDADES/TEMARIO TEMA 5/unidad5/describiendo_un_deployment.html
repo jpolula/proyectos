@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="es">
+<head>
+<link rel="stylesheet" type="text/css" href="base.css" />
+<link rel="stylesheet" type="text/css" href="content.css" />
+<link rel="stylesheet" type="text/css" href="nav.css" />
+<meta http-equiv="content-type" content="text/html;  charset=utf-8" />
+<title>Describiendo un Deployment | MODULO 5 </title>
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+<meta name="author" content="JAVI" />
+<link rel="license" type="text/html" href="http://creativecommons.org/licenses/by-sa/4.0/" />
+<meta name="generator" content="eXeLearning 2.8.1 - exelearning.net" />
+<!--[if lt IE 9]><script type="text/javascript" src="exe_html5.js"></script><![endif]-->
+<script type="text/javascript" src="exe_jquery.js"></script>
+<script type="text/javascript" src="common_i18n.js"></script>
+<script type="text/javascript" src="common.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body class="exe-web-site" id="exe-node-1"><script type="text/javascript">document.body.className+=" js"</script>
+<div id="content">
+<p id="skipNav"><a href="#main" class="sr-av">Saltar la navegación</a></p>
+<header id="header" ><div id="headerContent">MODULO 5</div></header>
+<nav id="siteNav">
+<ul>
+   <li><a href="index.html" class="daddy main-node">Despliegues: Deployments</a></li>
+   <li id="active"><a href="describiendo_un_deployment.html" class="active no-ch">Describiendo un Deployment</a></li>
+   <li><a href="gestin_bsica_de_un_deployment.html" class="no-ch">Gestión básica de un Deployment</a></li>
+   <li><a href="actualizacin_y_desactualizacin_de_un_deployment.html" class="no-ch">Actualización y desactualización de un Deployment</a></li>
+   <li><a href="crditos.html" class="no-ch">Créditos</a></li>
+</ul>
+</nav>
+<div id='topPagination'>
+<nav class="pagination noprt">
+<a href="index.html" class="prev"><span><span>&laquo; </span>Anterior</span></a> <span class="sep">| </span><a href="gestin_bsica_de_un_deployment.html" class="next"><span>Siguiente<span> &raquo;</span></span></a>
+</nav>
+</div>
+<div id="main-wrapper">
+<section id="main">
+<header id="nodeDecoration"><h1 id="nodeTitle">Describiendo un Deployment</h1></header>
+<article class="iDevice_wrapper textIdevice" id="id1">
+<div class="iDevice emphasis0" >
+<div id="ta1_124_2" class="block iDevice_content">
+<div class="exe-text"><p>Podemos crear un Deployment de forma imperativa utilizando un comando como el siguiente (se podrían indicar muchos más parámetros de configuración que podemos consultar en la documentación):</p>
+<div class="snippet-clipboard-content position-relative">
+<pre><code>kubectl create deployment nginx --image nginx
+</code></pre>
+</div>
+<p>Nosotros, sin embargo, vamos a seguir describiendo los recursos en un fichero yaml. En este caso para describir un Deployment de nginx podemos escribir un fichero <code><a href="nginx-deployment.yaml">nginx-deployment.yaml</a></code>:</p>
+<div class="highlight highlight-source-yaml position-relative">
+<pre><span class="pl-ent">apiVersion</span>: <span class="pl-s">apps/v1</span>
+<span class="pl-ent">kind</span>: <span class="pl-s">Deployment</span>
+<span class="pl-ent">metadata</span>:
+  <span class="pl-ent">name</span>: <span class="pl-s">deployment-nginx</span>
+  <span class="pl-ent">labels</span>:
+    <span class="pl-ent">app</span>: <span class="pl-s">nginx</span>
+<span class="pl-ent">spec</span>:
+  <span class="pl-ent">revisionHistoryLimit</span>: <span class="pl-c1">2</span>
+  <span class="pl-ent">strategy</span>:
+    <span class="pl-ent">type</span>: <span class="pl-s">RollingUpdate</span>
+  <span class="pl-ent">replicas</span>: <span class="pl-c1">2</span>
+  <span class="pl-ent">selector</span>:
+    <span class="pl-ent">matchLabels</span>:
+      <span class="pl-ent">app</span>: <span class="pl-s">nginx</span>
+  <span class="pl-ent">template</span>:
+    <span class="pl-ent">metadata</span>:
+      <span class="pl-ent">labels</span>:
+        <span class="pl-ent">app</span>: <span class="pl-s">nginx</span>
+    <span class="pl-ent">spec</span>:
+      <span class="pl-ent">containers</span>:
+      - <span class="pl-ent">image</span>: <span class="pl-s">nginx</span>
+        <span class="pl-ent">name</span>: <span class="pl-s">contendor-nginx</span>
+        <span class="pl-ent">ports</span>:
+        - <span class="pl-ent">name</span>: <span class="pl-s">http</span>
+          <span class="pl-ent">containerPort</span>: <span class="pl-c1">80</span></pre>
+</div>
+<p>La creación de un Deployment crea un ReplicaSet y los Pods correspondientes. Por lo tanto en la definición de un Deployment se define también el ReplicaSet asociado (los parámetros <code>replicas</code>, <code>selector</code> y <code>template</code>). Los atributos relacionados con el Deployment que hemos indicado en la definición son:</p>
+<ul>
+<li><code>revisionHistoryLimit</code>: Indicamos cuántos ReplicaSets antiguos deseamos conservar, para poder realizar rollback a estados anteriores. Por defecto, es 10.</li>
+<li><code>strategy</code>: Indica el modo en que se realiza una actualización del Deployment. Es decir, cuando modificamos la versión de la imagen del Deployment, se crea un ReplicaSet nuevo y ¿qué hacemos con los pods?:
+<ul>
+<li><code>Recreate</code>: elimina los Pods antiguos y crea los nuevos.</li>
+<li><code>RollingUpdate</code>: va creando los nuevos Pods, comprueba que funcionan y se eliminan los antiguos; es la opción por defecto.</li>
+</ul>
+</li>
+</ul>
+<p>Además, hemos introducido un nuevo parámetro al definir el contenedor del pod: con el parámetro <code>ports</code> hemos indicado el puerto que expone el contenedor (<code>containerPort</code>) y le hemos asignado un nombre (<code>name</code>).</p></div>
+</div>
+</div>
+</article>
+<article class="iDevice_wrapper textIdevice em_iDevice em_iDevice_saber" id="id4">
+<div class="iDevice emphasis1" >
+<header class="iDevice_header"><h1 class="iDeviceTitle">Para seguir aprendiendo</h1></header>
+<div class="iDevice_inner">
+<div class="iDevice_content_wrapper">
+<div id="ta4_127_2" class="block iDevice_content">
+<div class="exe-text"><ul>
+<li>Para más información acerca de los Deployment puedes leer: <a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#deployment-v1-apps" rel="nofollow">la documentación de la API</a> y la <a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/" rel="nofollow">guía de usuario</a>.</li>
+</ul></div>
+</div>
+</div>
+</div>
+</div>
+</article>
+<article class="iDevice_wrapper textIdevice em_iDevice em_iDevice_reproduccion" id="id7">
+<div class="iDevice emphasis1" >
+<header class="iDevice_header"><h1 class="iDeviceTitle">Vídeo: Describiendo un Deployment</h1></header>
+<div class="iDevice_inner">
+<div class="iDevice_content_wrapper">
+<div id="ta7_127_2" class="block iDevice_content">
+<div class="exe-text"><figure class="exe-figure exe-media position-center" style="width: 800px;"><iframe width="800" height="449" src="https://www.youtube.com/embed/NBsc_fILt8g" allowfullscreen="allowfullscreen"></iframe>
+<figcaption class="figcaption"><span class="title"><em>Vídeo: Describiendo un Deployment</em></span></figcaption>
+</figure>
+<p></p></div>
+</div>
+</div>
+</div>
+</div>
+</article>
+<div id="packageLicense" class="cc cc-by-sa">
+<p><span>Obra publicada con</span> <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Licencia Creative Commons Reconocimiento Compartir igual 4.0</a></p>
+</div>
+</section>
+</div>
+<div id='bottomPagination'>
+<nav class="pagination noprt">
+<a href="index.html" class="prev"><span><span>&laquo; </span>Anterior</span></a> <span class="sep">| </span><a href="gestin_bsica_de_un_deployment.html" class="next"><span>Siguiente<span> &raquo;</span></span></a>
+</nav>
+</div>
+</div>
+<p id="made-with-eXe"><a href="https://exelearning.net/" target="_blank" rel="noopener"><span>Creado con eXeLearning<span> (Ventana nueva)</span></span></a></p><script type="text/javascript" src="_intef_js.js"></script></body></html>

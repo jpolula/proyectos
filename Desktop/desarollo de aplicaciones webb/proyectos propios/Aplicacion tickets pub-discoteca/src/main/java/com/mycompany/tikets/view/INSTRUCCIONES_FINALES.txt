@@ -1,0 +1,43 @@
+INSTRUCCIONES PARA CORREGIR EL PROBLEMA DEL ICONO EN TICKETS
+
+El archivo MainWindow.java está corrupto y no se puede corregir fácilmente con ediciones parciales. Sigue estos pasos para resolver el problema:
+
+1. COPIA DE SEGURIDAD:
+   - Ya has hecho una copia de seguridad del archivo MainWindow.java como MainWindow_original.java
+
+2. REEMPLAZAR EL MÉTODO crearTicket:
+   - He creado un archivo crearTicket_correcto.java con la implementación correcta del método
+   - Este método incluye la corrección para usar rutaIcono en lugar de rutaLogo, con fallback a logo si no hay icono
+
+3. PASOS PARA CORREGIR MANUALMENTE:
+   a) Abre el archivo MainWindow.java en tu IDE
+   b) Localiza el método crearTicket (aproximadamente línea 300)
+   c) Reemplaza TODO el método con el contenido del archivo crearTicket_correcto.java
+   d) Asegúrate de que el método esté correctamente anidado dentro de la clase MainWindow
+
+4. PARTE CLAVE DEL CÓDIGO QUE CORRIGE EL PROBLEMA:
+```java
+// Asignar icono desde la configuración
+String rutaIcono = config.getRutaIcono();
+if (rutaIcono != null && !rutaIcono.isEmpty()) {
+    ticket.setIcono(rutaIcono);
+    System.out.println("Icono asignado al ticket: " + rutaIcono);
+} else {
+    // Si no hay icono configurado, intentar usar el logo como alternativa
+    String rutaLogo = config.getRutaLogo();
+    if (rutaLogo != null && !rutaLogo.isEmpty()) {
+        ticket.setIcono(rutaLogo);
+        System.out.println("No hay icono configurado, usando logo como alternativa: " + rutaLogo);
+    } else {
+        System.out.println("No hay icono ni logo configurado en la configuración");
+    }
+}
+```
+
+5. VERIFICACIÓN:
+   - Después de hacer los cambios, compila el proyecto
+   - Prueba la funcionalidad de selección de icono en la ventana de configuración
+   - Verifica que el icono se guarde correctamente en la base de datos
+   - Crea un ticket y verifica que use el icono seleccionado
+
+Si sigues teniendo problemas, considera restaurar todo el proyecto desde una copia de seguridad anterior y aplicar solo los cambios necesarios para la funcionalidad del icono.

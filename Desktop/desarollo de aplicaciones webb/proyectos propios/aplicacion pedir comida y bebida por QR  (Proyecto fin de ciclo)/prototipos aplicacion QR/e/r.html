@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Diagrama Entidad-Relación Restaurante</title>
+    <script src="[https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>](https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>)
+</head>
+<body>
+    <div class="mermaid">
+    erDiagram
+        MESA ||--o{ PEDIDO : tiene
+        PEDIDO ||--o{ ITEM_PEDIDO : contiene
+        PRODUCTO ||--o{ ITEM_PEDIDO : "está en"
+        EMPLEADO ||--o{ PEDIDO : gestiona
+        CONFIGURACION ||--|| SISTEMA : configura
+
+        MESA {
+            int id_mesa
+            int numero
+            string estado
+            string ubicacion
+        }
+
+        PEDIDO {
+            int id_pedido
+            datetime fecha_hora
+            string estado
+            float total
+            int mesa_id
+            int empleado_id
+        }
+
+        ITEM_PEDIDO {
+            int id_item
+            int cantidad
+            string estado
+            int pedido_id
+            int producto_id
+        }
+
+        PRODUCTO {
+            int id_producto
+            string nombre
+            float precio
+            string categoria
+        }
+
+        EMPLEADO {
+            int id_empleado
+            string nombre
+            string rol
+            string estado
+        }
+
+        CONFIGURACION {
+            int tiempo_max_preparacion
+            boolean notificaciones_email
+            string otros_parametros
+        }
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+</body>
+</html>

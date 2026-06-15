@@ -1,0 +1,5 @@
+impresora=POS-80C
+imprimirTicket=true
+imprimirVale=true
+guardarArchivo=true
+mostrarDialogo=false

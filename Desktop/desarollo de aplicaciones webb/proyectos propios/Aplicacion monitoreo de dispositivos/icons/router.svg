@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <path d="M20,8h-4V4a1,1,0,0,0-1-1H9A1,1,0,0,0,8,4V8H4a2,2,0,0,0-2,2v8a2,2,0,0,0,2,2H20a2,2,0,0,0,2-2V10A2,2,0,0,0,20,8ZM10,5h4V8H10Zm10,13H4V10H20Z M6,12a1,1,0,1,0,1,1A1,1,0,0,0,6,12Zm4,0a1,1,0,1,0,1,1A1,1,0,0,0,10,12Zm4,0a1,1,0,1,0,1,1A1,1,0,0,0,14,12Z" fill="currentColor"/>
+</svg>

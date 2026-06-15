@@ -1,0 +1,1283 @@
+Iniciando daemon de monitoreo...
+Monitor iniciado. Intervalo: 60 segundos
+
+Estado anterior: ninguno
+Estado actual: UP
+
+2025-04-09 15:46:58 - ✅ ROUTER IMPULSA (192.168.1.1): ACTIVO
+Estado anterior: ninguno
+Estado actual: UP
+
+2025-04-09 15:46:59 - ✅ pc alea (192.168.1.7): ACTIVO
+2025-04-09 15:47:03 - ❌ Ceragon Jabalcon (192.168.23.209): CAÍDO
+Preparando envío de notificación...
+Bot Token: 8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc
+Chat ID: 2006319483
+URL: https://api.telegram.org/bot8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc/sendMessage
+Enviando mensaje...
+Respuesta de Telegram: Array
+(
+    [ok] => 1
+    [result] => Array
+        (
+            [message_id] => 2030
+            [from] => Array
+                (
+                    [id] => 8054210057
+                    [is_bot] => 1
+                    [first_name] => ARMANI Asistente
+                    [username] => armani_impulsa_bot
+                )
+
+            [chat] => Array
+                (
+                    [id] => 2006319483
+                    [first_name] => Juan Pedro
+                    [last_name] => Martinez
+                    [username] => Juannnnnnnnnnnnnn
+                    [type] => private
+                )
+
+            [date] => 1744206425
+            [text] => ❌ ALERTA: Dispositivo sin respuesta
+
+📍 Mimosa campoo
+   • IP: 192.168.23.214
+   • Estado: CAÍDO
+   • Última verificación: 09/04/2025 15:47:12
+            [entities] => Array
+                (
+                    [0] => Array
+                        (
+                            [offset] => 2
+                            [length] => 33
+                            [type] => bold
+                        )
+
+                    [1] => Array
+                        (
+                            [offset] => 40
+                            [length] => 13
+                            [type] => bold
+                        )
+
+                    [2] => Array
+                        (
+                            [offset] => 63
+                            [length] => 14
+                            [type] => code
+                        )
+
+                    [3] => Array
+                        (
+                            [offset] => 91
+                            [length] => 5
+                            [type] => bold
+                        )
+
+                )
+
+        )
+
+)
+
+Mensaje enviado exitosamente
+
+¡Dispositivo CAÍDO: Mimosa campoo (192.168.23.214)!
+Estado anterior: ninguno
+Estado actual: DOWN
+
+2025-04-09 15:47:12 - ❌ Mimosa campoo (192.168.23.214): CAÍDO
+
+¡Se detectaron cambios! Guardando estado...
+
+Esperando 60 segundos...
+
+2025-04-09 15:48:12 - ✅ ROUTER IMPULSA (192.168.1.1): ACTIVO
+2025-04-09 15:48:13 - ✅ pc alea (192.168.1.7): ACTIVO
+2025-04-09 15:48:16 - ❌ Mimosa campoo (192.168.23.214): CAÍDO
+Preparando envío de notificación...
+Bot Token: 8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc
+Chat ID: 2006319483
+URL: https://api.telegram.org/bot8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc/sendMessage
+Enviando mensaje...
+Respuesta de Telegram: Array
+(
+    [ok] => 1
+    [result] => Array
+        (
+            [message_id] => 2031
+            [from] => Array
+                (
+                    [id] => 8054210057
+                    [is_bot] => 1
+                    [first_name] => ARMANI Asistente
+                    [username] => armani_impulsa_bot
+                )
+
+            [chat] => Array
+                (
+                    [id] => 2006319483
+                    [first_name] => Juan Pedro
+                    [last_name] => Martinez
+                    [username] => Juannnnnnnnnnnnnn
+                    [type] => private
+                )
+
+            [date] => 1744206494
+            [text] => ❌ ALERTA: Dispositivo sin respuesta
+
+📍 este va a fallar
+   • IP: 192.168.200.200
+   • Estado: CAÍDO
+   • Última verificación: 09/04/2025 15:48:21
+            [entities] => Array
+                (
+                    [0] => Array
+                        (
+                            [offset] => 2
+                            [length] => 33
+                            [type] => bold
+                        )
+
+                    [1] => Array
+                        (
+                            [offset] => 40
+                            [length] => 16
+                            [type] => bold
+                        )
+
+                    [2] => Array
+                        (
+                            [offset] => 66
+                            [length] => 15
+                            [type] => code
+                        )
+
+                    [3] => Array
+                        (
+                            [offset] => 95
+                            [length] => 5
+                            [type] => bold
+                        )
+
+                )
+
+        )
+
+)
+
+Mensaje enviado exitosamente
+
+¡Dispositivo CAÍDO: este va a fallar (192.168.200.200)!
+Estado anterior: ninguno
+Estado actual: DOWN
+
+2025-04-09 15:48:22 - ❌ este va a fallar (192.168.200.200): CAÍDO
+
+¡Se detectaron cambios! Guardando estado...
+
+Esperando 60 segundos...
+
+2025-04-09 15:49:22 - ✅ ROUTER IMPULSA (192.168.1.1): ACTIVO
+2025-04-09 15:49:22 - ✅ pc alea (192.168.1.7): ACTIVO
+2025-04-09 15:49:25 - ❌ Mimosa campoo (192.168.23.214): CAÍDO
+Preparando envío de notificación...
+Bot Token: 8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc
+Chat ID: 2006319483
+URL: https://api.telegram.org/bot8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc/sendMessage
+Enviando mensaje...
+Respuesta de Telegram: Array
+(
+    [ok] => 1
+    [result] => Array
+        (
+            [message_id] => 2032
+            [from] => Array
+                (
+                    [id] => 8054210057
+                    [is_bot] => 1
+                    [first_name] => ARMANI Asistente
+                    [username] => armani_impulsa_bot
+                )
+
+            [chat] => Array
+                (
+                    [id] => 2006319483
+                    [first_name] => Juan Pedro
+                    [last_name] => Martinez
+                    [username] => Juannnnnnnnnnnnnn
+                    [type] => private
+                )
+
+            [date] => 1744206562
+            [text] => ❌ ALERTA: Dispositivo sin respuesta
+
+📍 ahora si valdra
+   • IP: 192.168.1.8
+   • Estado: CAÍDO
+   • Última verificación: 09/04/2025 15:49:29
+            [entities] => Array
+                (
+                    [0] => Array
+                        (
+                            [offset] => 2
+                            [length] => 33
+                            [type] => bold
+                        )
+
+                    [1] => Array
+                        (
+                            [offset] => 40
+                            [length] => 15
+                            [type] => bold
+                        )
+
+                    [2] => Array
+                        (
+                            [offset] => 65
+                            [length] => 11
+                            [type] => code
+                        )
+
+                    [3] => Array
+                        (
+                            [offset] => 90
+                            [length] => 5
+                            [type] => bold
+                        )
+
+                )
+
+        )
+
+)
+
+Mensaje enviado exitosamente
+
+¡Dispositivo CAÍDO: ahora si valdra (192.168.1.8)!
+Estado anterior: ninguno
+Estado actual: DOWN
+
+2025-04-09 15:49:29 - ❌ ahora si valdra (192.168.1.8): CAÍDO
+
+¡Se detectaron cambios! Guardando estado...
+
+Esperando 60 segundos...
+
+2025-04-09 15:50:29 - ✅ ROUTER IMPULSA (192.168.1.1): ACTIVO
+2025-04-09 15:50:29 - ✅ pc alea (192.168.1.7): ACTIVO
+2025-04-09 15:50:33 - ❌ Mimosa campoo (192.168.23.214): CAÍDO
+Estado anterior: ninguno
+Estado actual: UP
+
+2025-04-09 15:50:34 - ✅ ahora si valdra seguro (192.168.1.12): ACTIVO
+
+¡Se detectaron cambios! Guardando estado...
+
+Esperando 60 segundos...
+
+2025-04-09 15:51:34 - ✅ ROUTER IMPULSA (192.168.1.1): ACTIVO
+2025-04-09 15:51:34 - ✅ pc alea (192.168.1.7): ACTIVO
+2025-04-09 15:51:38 - ❌ Mimosa campoo (192.168.23.214): CAÍDO
+2025-04-09 15:51:38 - ✅ ahora si valdra seguro (192.168.1.12): ACTIVO
+
+Esperando 60 segundos...
+
+Preparando envío de notificación...
+Bot Token: 8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc
+Chat ID: 2006319483
+URL: https://api.telegram.org/bot8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc/sendMessage
+Enviando mensaje...
+Error de cURL: Could not resolve host: api.telegram.org
+
+¡Dispositivo CAÍDO: ROUTER IMPULSA (192.168.1.1)!
+Estado anterior: UP
+Estado actual: DOWN
+
+2025-04-09 15:52:38 - ❌ ROUTER IMPULSA (192.168.1.1): CAÍDO
+Preparando envío de notificación...
+Bot Token: 8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc
+Chat ID: 2006319483
+URL: https://api.telegram.org/bot8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc/sendMessage
+Enviando mensaje...
+Error de cURL: Could not resolve host: api.telegram.org
+
+¡Dispositivo CAÍDO: pc alea (192.168.1.7)!
+Estado anterior: UP
+Estado actual: DOWN
+
+2025-04-09 15:52:38 - ❌ pc alea (192.168.1.7): CAÍDO
+2025-04-09 15:52:42 - ❌ Mimosa campoo (192.168.23.214): CAÍDO
+Preparando envío de notificación...
+Bot Token: 8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc
+Chat ID: 2006319483
+URL: https://api.telegram.org/bot8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc/sendMessage
+Enviando mensaje...
+Error de cURL: Could not resolve host: api.telegram.org
+
+¡Dispositivo CAÍDO: ahora si valdra seguro (192.168.1.12)!
+Estado anterior: UP
+Estado actual: DOWN
+
+2025-04-09 15:52:42 - ❌ ahora si valdra seguro (192.168.1.12): CAÍDO
+Preparando envío de notificación...
+Bot Token: 8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc
+Chat ID: 2006319483
+URL: https://api.telegram.org/bot8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc/sendMessage
+Enviando mensaje...
+Error de cURL: Could not resolve host: api.telegram.org
+
+¡Dispositivo CAÍDO: mi portatil (192.168.1.141)!
+Estado anterior: ninguno
+Estado actual: DOWN
+
+2025-04-09 15:52:42 - ❌ mi portatil (192.168.1.141): CAÍDO
+
+¡Se detectaron cambios! Guardando estado...
+
+Esperando 60 segundos...
+
+2025-04-09 15:53:45 - ❌ ROUTER IMPULSA (192.168.1.1): CAÍDO
+2025-04-09 15:53:48 - ❌ pc alea (192.168.1.7): CAÍDO
+2025-04-09 15:53:49 - ❌ Mimosa campoo (192.168.23.214): CAÍDO
+Preparando envío de notificación...
+Bot Token: 8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc
+Chat ID: 2006319483
+URL: https://api.telegram.org/bot8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc/sendMessage
+Enviando mensaje...
+Respuesta de Telegram: Array
+(
+    [ok] => 1
+    [result] => Array
+        (
+            [message_id] => 2033
+            [from] => Array
+                (
+                    [id] => 8054210057
+                    [is_bot] => 1
+                    [first_name] => ARMANI Asistente
+                    [username] => armani_impulsa_bot
+                )
+
+            [chat] => Array
+                (
+                    [id] => 2006319483
+                    [first_name] => Juan Pedro
+                    [last_name] => Martinez
+                    [username] => Juannnnnnnnnnnnnn
+                    [type] => private
+                )
+
+            [date] => 1744206823
+            [text] => ✅ RECUPERACIÓN: Dispositivo restablecido
+
+📍 ahora si valdra seguro
+   • IP: 192.168.1.12
+   • Estado: RECUPERADO
+   • Hora de recuperación: 09/04/2025 15:53:50
+            [entities] => Array
+                (
+                    [0] => Array
+                        (
+                            [offset] => 2
+                            [length] => 38
+                            [type] => bold
+                        )
+
+                    [1] => Array
+                        (
+                            [offset] => 45
+                            [length] => 22
+                            [type] => bold
+                        )
+
+                    [2] => Array
+                        (
+                            [offset] => 77
+                            [length] => 12
+                            [type] => code
+                        )
+
+                    [3] => Array
+                        (
+                            [offset] => 103
+                            [length] => 10
+                            [type] => bold
+                        )
+
+                )
+
+        )
+
+)
+
+Mensaje enviado exitosamente
+
+¡Dispositivo RECUPERADO: ahora si valdra seguro (192.168.1.12)!
+Estado anterior: DOWN
+Estado actual: UP
+
+2025-04-09 15:53:50 - ✅ ahora si valdra seguro (192.168.1.12): ACTIVO
+Preparando envío de notificación...
+Bot Token: 8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc
+Chat ID: 2006319483
+URL: https://api.telegram.org/bot8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc/sendMessage
+Enviando mensaje...
+Respuesta de Telegram: Array
+(
+    [ok] => 1
+    [result] => Array
+        (
+            [message_id] => 2034
+            [from] => Array
+                (
+                    [id] => 8054210057
+                    [is_bot] => 1
+                    [first_name] => ARMANI Asistente
+                    [username] => armani_impulsa_bot
+                )
+
+            [chat] => Array
+                (
+                    [id] => 2006319483
+                    [first_name] => Juan Pedro
+                    [last_name] => Martinez
+                    [username] => Juannnnnnnnnnnnnn
+                    [type] => private
+                )
+
+            [date] => 1744206825
+            [text] => ✅ RECUPERACIÓN: Dispositivo restablecido
+
+📍 mi portatil
+   • IP: 192.168.1.141
+   • Estado: RECUPERADO
+   • Hora de recuperación: 09/04/2025 15:53:52
+            [entities] => Array
+                (
+                    [0] => Array
+                        (
+                            [offset] => 2
+                            [length] => 38
+                            [type] => bold
+                        )
+
+                    [1] => Array
+                        (
+                            [offset] => 45
+                            [length] => 11
+                            [type] => bold
+                        )
+
+                    [2] => Array
+                        (
+                            [offset] => 66
+                            [length] => 13
+                            [type] => code
+                        )
+
+                    [3] => Array
+                        (
+                            [offset] => 93
+                            [length] => 10
+                            [type] => bold
+                        )
+
+                )
+
+        )
+
+)
+
+Mensaje enviado exitosamente
+
+¡Dispositivo RECUPERADO: mi portatil (192.168.1.141)!
+Estado anterior: DOWN
+Estado actual: UP
+
+2025-04-09 15:53:53 - ✅ mi portatil (192.168.1.141): ACTIVO
+
+¡Se detectaron cambios! Guardando estado...
+
+Esperando 60 segundos...
+
+Preparando envío de notificación...
+Bot Token: 8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc
+Chat ID: 2006319483
+URL: https://api.telegram.org/bot8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc/sendMessage
+Enviando mensaje...
+Respuesta de Telegram: Array
+(
+    [ok] => 1
+    [result] => Array
+        (
+            [message_id] => 2035
+            [from] => Array
+                (
+                    [id] => 8054210057
+                    [is_bot] => 1
+                    [first_name] => ARMANI Asistente
+                    [username] => armani_impulsa_bot
+                )
+
+            [chat] => Array
+                (
+                    [id] => 2006319483
+                    [first_name] => Juan Pedro
+                    [last_name] => Martinez
+                    [username] => Juannnnnnnnnnnnnn
+                    [type] => private
+                )
+
+            [date] => 1744206887
+            [text] => ✅ RECUPERACIÓN: Dispositivo restablecido
+
+📍 ROUTER IMPULSA
+   • IP: 192.168.1.1
+   • Estado: RECUPERADO
+   • Hora de recuperación: 09/04/2025 15:54:54
+            [entities] => Array
+                (
+                    [0] => Array
+                        (
+                            [offset] => 2
+                            [length] => 38
+                            [type] => bold
+                        )
+
+                    [1] => Array
+                        (
+                            [offset] => 45
+                            [length] => 14
+                            [type] => bold
+                        )
+
+                    [2] => Array
+                        (
+                            [offset] => 69
+                            [length] => 11
+                            [type] => code
+                        )
+
+                    [3] => Array
+                        (
+                            [offset] => 94
+                            [length] => 10
+                            [type] => bold
+                        )
+
+                )
+
+        )
+
+)
+
+Mensaje enviado exitosamente
+
+¡Dispositivo RECUPERADO: ROUTER IMPULSA (192.168.1.1)!
+Estado anterior: DOWN
+Estado actual: UP
+
+2025-04-09 15:54:54 - ✅ ROUTER IMPULSA (192.168.1.1): ACTIVO
+Preparando envío de notificación...
+Bot Token: 8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc
+Chat ID: 2006319483
+URL: https://api.telegram.org/bot8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc/sendMessage
+Enviando mensaje...
+Respuesta de Telegram: Array
+(
+    [ok] => 1
+    [result] => Array
+        (
+            [message_id] => 2036
+            [from] => Array
+                (
+                    [id] => 8054210057
+                    [is_bot] => 1
+                    [first_name] => ARMANI Asistente
+                    [username] => armani_impulsa_bot
+                )
+
+            [chat] => Array
+                (
+                    [id] => 2006319483
+                    [first_name] => Juan Pedro
+                    [last_name] => Martinez
+                    [username] => Juannnnnnnnnnnnnn
+                    [type] => private
+                )
+
+            [date] => 1744206888
+            [text] => ✅ RECUPERACIÓN: Dispositivo restablecido
+
+📍 pc alea
+   • IP: 192.168.1.7
+   • Estado: RECUPERADO
+   • Hora de recuperación: 09/04/2025 15:54:55
+            [entities] => Array
+                (
+                    [0] => Array
+                        (
+                            [offset] => 2
+                            [length] => 38
+                            [type] => bold
+                        )
+
+                    [1] => Array
+                        (
+                            [offset] => 45
+                            [length] => 7
+                            [type] => bold
+                        )
+
+                    [2] => Array
+                        (
+                            [offset] => 62
+                            [length] => 11
+                            [type] => code
+                        )
+
+                    [3] => Array
+                        (
+                            [offset] => 87
+                            [length] => 10
+                            [type] => bold
+                        )
+
+                )
+
+        )
+
+)
+
+Mensaje enviado exitosamente
+
+¡Dispositivo RECUPERADO: pc alea (192.168.1.7)!
+Estado anterior: DOWN
+Estado actual: UP
+
+2025-04-09 15:54:56 - ✅ pc alea (192.168.1.7): ACTIVO
+2025-04-09 15:54:59 - ❌ Mimosa campoo (192.168.23.214): CAÍDO
+2025-04-09 15:54:59 - ✅ ahora si valdra seguro (192.168.1.12): ACTIVO
+2025-04-09 15:54:59 - ✅ mi portatil (192.168.1.141): ACTIVO
+
+¡Se detectaron cambios! Guardando estado...
+
+Esperando 60 segundos...
+
+2025-04-09 15:56:00 - ✅ ROUTER IMPULSA (192.168.1.1): ACTIVO
+2025-04-09 15:56:00 - ✅ pc alea (192.168.1.7): ACTIVO
+2025-04-09 15:56:03 - ❌ Mimosa campoo (192.168.23.214): CAÍDO
+2025-04-09 15:56:03 - ✅ ahora si valdra seguro (192.168.1.12): ACTIVO
+2025-04-09 15:56:03 - ✅ mi portatil (192.168.1.141): ACTIVO
+
+Esperando 60 segundos...
+
+2025-04-09 15:57:03 - ✅ ROUTER IMPULSA (192.168.1.1): ACTIVO
+2025-04-09 15:57:04 - ✅ pc alea (192.168.1.7): ACTIVO
+2025-04-09 15:57:07 - ❌ Mimosa campoo (192.168.23.214): CAÍDO
+2025-04-09 15:57:07 - ✅ ahora si valdra seguro (192.168.1.12): ACTIVO
+2025-04-09 15:57:07 - ✅ mi portatil (192.168.1.141): ACTIVO
+
+Esperando 60 segundos...
+
+2025-04-09 15:58:07 - ✅ ROUTER IMPULSA (192.168.1.1): ACTIVO
+2025-04-09 15:58:08 - ✅ pc alea (192.168.1.7): ACTIVO
+2025-04-09 15:58:08 - ✅ ahora si valdra seguro (192.168.1.12): ACTIVO
+Preparando envío de notificación...
+Bot Token: 8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc
+Chat ID: 2006319483
+URL: https://api.telegram.org/bot8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc/sendMessage
+Enviando mensaje...
+Respuesta de Telegram: Array
+(
+    [ok] => 1
+    [result] => Array
+        (
+            [message_id] => 2037
+            [from] => Array
+                (
+                    [id] => 8054210057
+                    [is_bot] => 1
+                    [first_name] => ARMANI Asistente
+                    [username] => armani_impulsa_bot
+                )
+
+            [chat] => Array
+                (
+                    [id] => 2006319483
+                    [first_name] => Juan Pedro
+                    [last_name] => Martinez
+                    [username] => Juannnnnnnnnnnnnn
+                    [type] => private
+                )
+
+            [date] => 1744207082
+            [text] => ✅ RECUPERACIÓN: Dispositivo restablecido
+
+📍 Mimosa campoo
+   • IP: 192.168.1.24
+   • Estado: RECUPERADO
+   • Hora de recuperación: 09/04/2025 15:58:09
+            [entities] => Array
+                (
+                    [0] => Array
+                        (
+                            [offset] => 2
+                            [length] => 38
+                            [type] => bold
+                        )
+
+                    [1] => Array
+                        (
+                            [offset] => 45
+                            [length] => 13
+                            [type] => bold
+                        )
+
+                    [2] => Array
+                        (
+                            [offset] => 68
+                            [length] => 12
+                            [type] => code
+                        )
+
+                    [3] => Array
+                        (
+                            [offset] => 94
+                            [length] => 10
+                            [type] => bold
+                        )
+
+                )
+
+        )
+
+)
+
+Mensaje enviado exitosamente
+
+¡Dispositivo RECUPERADO: Mimosa campoo (192.168.1.24)!
+Estado anterior: DOWN
+Estado actual: UP
+
+2025-04-09 15:58:09 - ✅ Mimosa campoo (192.168.1.24): ACTIVO
+Preparando envío de notificación...
+Bot Token: 8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc
+Chat ID: 2006319483
+URL: https://api.telegram.org/bot8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc/sendMessage
+Enviando mensaje...
+Respuesta de Telegram: Array
+(
+    [ok] => 1
+    [result] => Array
+        (
+            [message_id] => 2038
+            [from] => Array
+                (
+                    [id] => 8054210057
+                    [is_bot] => 1
+                    [first_name] => ARMANI Asistente
+                    [username] => armani_impulsa_bot
+                )
+
+            [chat] => Array
+                (
+                    [id] => 2006319483
+                    [first_name] => Juan Pedro
+                    [last_name] => Martinez
+                    [username] => Juannnnnnnnnnnnnn
+                    [type] => private
+                )
+
+            [date] => 1744207092
+            [text] => ❌ ALERTA: Dispositivo sin respuesta
+
+📍 mi portatil
+   • IP: 192.168.2.111
+   • Estado: CAÍDO
+   • Última verificación: 09/04/2025 15:58:19
+            [entities] => Array
+                (
+                    [0] => Array
+                        (
+                            [offset] => 2
+                            [length] => 33
+                            [type] => bold
+                        )
+
+                    [1] => Array
+                        (
+                            [offset] => 40
+                            [length] => 11
+                            [type] => bold
+                        )
+
+                    [2] => Array
+                        (
+                            [offset] => 61
+                            [length] => 13
+                            [type] => code
+                        )
+
+                    [3] => Array
+                        (
+                            [offset] => 88
+                            [length] => 5
+                            [type] => bold
+                        )
+
+                )
+
+        )
+
+)
+
+Mensaje enviado exitosamente
+
+¡Dispositivo CAÍDO: mi portatil (192.168.2.111)!
+Estado anterior: UP
+Estado actual: DOWN
+
+2025-04-09 15:58:19 - ❌ mi portatil (192.168.2.111): CAÍDO
+
+¡Se detectaron cambios! Guardando estado...
+
+Esperando 60 segundos...
+
+2025-04-09 15:59:20 - ✅ ROUTER IMPULSA (192.168.1.1): ACTIVO
+2025-04-09 15:59:20 - ✅ pc alea (192.168.1.7): ACTIVO
+2025-04-09 15:59:20 - ✅ ahora si valdra seguro (192.168.1.12): ACTIVO
+2025-04-09 15:59:20 - ✅ Mimosa campoo (192.168.1.24): ACTIVO
+Preparando envío de notificación...
+Bot Token: 8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc
+Chat ID: 2006319483
+URL: https://api.telegram.org/bot8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc/sendMessage
+Enviando mensaje...
+Respuesta de Telegram: Array
+(
+    [ok] => 1
+    [result] => Array
+        (
+            [message_id] => 2039
+            [from] => Array
+                (
+                    [id] => 8054210057
+                    [is_bot] => 1
+                    [first_name] => ARMANI Asistente
+                    [username] => armani_impulsa_bot
+                )
+
+            [chat] => Array
+                (
+                    [id] => 2006319483
+                    [first_name] => Juan Pedro
+                    [last_name] => Martinez
+                    [username] => Juannnnnnnnnnnnnn
+                    [type] => private
+                )
+
+            [date] => 1744207153
+            [text] => ✅ RECUPERACIÓN: Dispositivo restablecido
+
+📍 mi portatil
+   • IP: 192.168.1.141
+   • Estado: RECUPERADO
+   • Hora de recuperación: 09/04/2025 15:59:20
+            [entities] => Array
+                (
+                    [0] => Array
+                        (
+                            [offset] => 2
+                            [length] => 38
+                            [type] => bold
+                        )
+
+                    [1] => Array
+                        (
+                            [offset] => 45
+                            [length] => 11
+                            [type] => bold
+                        )
+
+                    [2] => Array
+                        (
+                            [offset] => 66
+                            [length] => 13
+                            [type] => code
+                        )
+
+                    [3] => Array
+                        (
+                            [offset] => 93
+                            [length] => 10
+                            [type] => bold
+                        )
+
+                )
+
+        )
+
+)
+
+Mensaje enviado exitosamente
+
+¡Dispositivo RECUPERADO: mi portatil (192.168.1.141)!
+Estado anterior: DOWN
+Estado actual: UP
+
+2025-04-09 15:59:20 - ✅ mi portatil (192.168.1.141): ACTIVO
+
+¡Se detectaron cambios! Guardando estado...
+
+Esperando 60 segundos...
+
+2025-04-09 16:00:20 - ✅ ROUTER IMPULSA (192.168.1.1): ACTIVO
+2025-04-09 16:00:20 - ✅ ahora si valdra seguro (192.168.1.12): ACTIVO
+2025-04-09 16:00:20 - ✅ Mimosa campoo (192.168.1.24): ACTIVO
+2025-04-09 16:00:20 - ✅ mi portatil (192.168.1.141): ACTIVO
+Preparando envío de notificación...
+Bot Token: 8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc
+Chat ID: 2006319483
+URL: https://api.telegram.org/bot8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc/sendMessage
+Enviando mensaje...
+Respuesta de Telegram: Array
+(
+    [ok] => 1
+    [result] => Array
+        (
+            [message_id] => 2040
+            [from] => Array
+                (
+                    [id] => 8054210057
+                    [is_bot] => 1
+                    [first_name] => ARMANI Asistente
+                    [username] => armani_impulsa_bot
+                )
+
+            [chat] => Array
+                (
+                    [id] => 2006319483
+                    [first_name] => Juan Pedro
+                    [last_name] => Martinez
+                    [username] => Juannnnnnnnnnnnnn
+                    [type] => private
+                )
+
+            [date] => 1744207218
+            [text] => ❌ ALERTA: Dispositivo sin respuesta
+
+📍 pc alea
+   • IP: 192.168.11.7
+   • Estado: CAÍDO
+   • Última verificación: 09/04/2025 16:00:25
+            [entities] => Array
+                (
+                    [0] => Array
+                        (
+                            [offset] => 2
+                            [length] => 33
+                            [type] => bold
+                        )
+
+                    [1] => Array
+                        (
+                            [offset] => 40
+                            [length] => 7
+                            [type] => bold
+                        )
+
+                    [2] => Array
+                        (
+                            [offset] => 57
+                            [length] => 12
+                            [type] => code
+                        )
+
+                    [3] => Array
+                        (
+                            [offset] => 83
+                            [length] => 5
+                            [type] => bold
+                        )
+
+                )
+
+        )
+
+)
+
+Mensaje enviado exitosamente
+
+¡Dispositivo CAÍDO: pc alea (192.168.11.7)!
+Estado anterior: UP
+Estado actual: DOWN
+
+2025-04-09 16:00:25 - ❌ pc alea (192.168.11.7): CAÍDO
+
+¡Se detectaron cambios! Guardando estado...
+
+Esperando 60 segundos...
+
+2025-04-09 16:01:26 - ✅ ROUTER IMPULSA (192.168.1.1): ACTIVO
+2025-04-09 16:01:26 - ✅ ahora si valdra seguro (192.168.1.12): ACTIVO
+2025-04-09 16:01:26 - ✅ Mimosa campoo (192.168.1.24): ACTIVO
+2025-04-09 16:01:26 - ✅ mi portatil (192.168.1.141): ACTIVO
+Preparando envío de notificación...
+Bot Token: 8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc
+Chat ID: 2006319483
+URL: https://api.telegram.org/bot8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc/sendMessage
+Enviando mensaje...
+Respuesta de Telegram: Array
+(
+    [ok] => 1
+    [result] => Array
+        (
+            [message_id] => 2041
+            [from] => Array
+                (
+                    [id] => 8054210057
+                    [is_bot] => 1
+                    [first_name] => ARMANI Asistente
+                    [username] => armani_impulsa_bot
+                )
+
+            [chat] => Array
+                (
+                    [id] => 2006319483
+                    [first_name] => Juan Pedro
+                    [last_name] => Martinez
+                    [username] => Juannnnnnnnnnnnnn
+                    [type] => private
+                )
+
+            [date] => 1744207279
+            [text] => ✅ RECUPERACIÓN: Dispositivo restablecido
+
+📍 pc alea
+   • IP: 192.168.1.7
+   • Estado: RECUPERADO
+   • Hora de recuperación: 09/04/2025 16:01:26
+            [entities] => Array
+                (
+                    [0] => Array
+                        (
+                            [offset] => 2
+                            [length] => 38
+                            [type] => bold
+                        )
+
+                    [1] => Array
+                        (
+                            [offset] => 45
+                            [length] => 7
+                            [type] => bold
+                        )
+
+                    [2] => Array
+                        (
+                            [offset] => 62
+                            [length] => 11
+                            [type] => code
+                        )
+
+                    [3] => Array
+                        (
+                            [offset] => 87
+                            [length] => 10
+                            [type] => bold
+                        )
+
+                )
+
+        )
+
+)
+
+Mensaje enviado exitosamente
+
+¡Dispositivo RECUPERADO: pc alea (192.168.1.7)!
+Estado anterior: DOWN
+Estado actual: UP
+
+2025-04-09 16:01:26 - ✅ pc alea (192.168.1.7): ACTIVO
+
+¡Se detectaron cambios! Guardando estado...
+
+Esperando 60 segundos...
+
+2025-04-09 16:02:26 - ✅ ROUTER IMPULSA (192.168.1.1): ACTIVO
+2025-04-09 16:02:26 - ✅ ahora si valdra seguro (192.168.1.12): ACTIVO
+2025-04-09 16:02:26 - ✅ Mimosa campoo (192.168.1.24): ACTIVO
+2025-04-09 16:02:26 - ✅ mi portatil (192.168.1.141): ACTIVO
+Preparando envío de notificación...
+Bot Token: 8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc
+Chat ID: 2006319483
+URL: https://api.telegram.org/bot8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc/sendMessage
+Enviando mensaje...
+Respuesta de Telegram: Array
+(
+    [ok] => 1
+    [result] => Array
+        (
+            [message_id] => 2042
+            [from] => Array
+                (
+                    [id] => 8054210057
+                    [is_bot] => 1
+                    [first_name] => ARMANI Asistente
+                    [username] => armani_impulsa_bot
+                )
+
+            [chat] => Array
+                (
+                    [id] => 2006319483
+                    [first_name] => Juan Pedro
+                    [last_name] => Martinez
+                    [username] => Juannnnnnnnnnnnnn
+                    [type] => private
+                )
+
+            [date] => 1744207344
+            [text] => ❌ ALERTA: Dispositivo sin respuesta
+
+📍 pc alea
+   • IP: 192.168.2.12
+   • Estado: CAÍDO
+   • Última verificación: 09/04/2025 16:02:31
+            [entities] => Array
+                (
+                    [0] => Array
+                        (
+                            [offset] => 2
+                            [length] => 33
+                            [type] => bold
+                        )
+
+                    [1] => Array
+                        (
+                            [offset] => 40
+                            [length] => 7
+                            [type] => bold
+                        )
+
+                    [2] => Array
+                        (
+                            [offset] => 57
+                            [length] => 12
+                            [type] => code
+                        )
+
+                    [3] => Array
+                        (
+                            [offset] => 83
+                            [length] => 5
+                            [type] => bold
+                        )
+
+                )
+
+        )
+
+)
+
+Mensaje enviado exitosamente
+
+¡Dispositivo CAÍDO: pc alea (192.168.2.12)!
+Estado anterior: UP
+Estado actual: DOWN
+
+2025-04-09 16:02:31 - ❌ pc alea (192.168.2.12): CAÍDO
+
+¡Se detectaron cambios! Guardando estado...
+
+Esperando 60 segundos...
+
+2025-04-09 16:03:32 - ✅ ROUTER IMPULSA (192.168.1.1): ACTIVO
+2025-04-09 16:03:32 - ✅ ahora si valdra seguro (192.168.1.12): ACTIVO
+2025-04-09 16:03:32 - ✅ Mimosa campoo (192.168.1.24): ACTIVO
+2025-04-09 16:03:32 - ✅ mi portatil (192.168.1.141): ACTIVO
+Preparando envío de notificación...
+Bot Token: 8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc
+Chat ID: 2006319483
+URL: https://api.telegram.org/bot8054210057:AAFlbFFPd_H98CXKtWjlCgImhsDSyZOSGMc/sendMessage
+Enviando mensaje...
+Respuesta de Telegram: Array
+(
+    [ok] => 1
+    [result] => Array
+        (
+            [message_id] => 2043
+            [from] => Array
+                (
+                    [id] => 8054210057
+                    [is_bot] => 1
+                    [first_name] => ARMANI Asistente
+                    [username] => armani_impulsa_bot
+                )
+
+            [chat] => Array
+                (
+                    [id] => 2006319483
+                    [first_name] => Juan Pedro
+                    [last_name] => Martinez
+                    [username] => Juannnnnnnnnnnnnn
+                    [type] => private
+                )
+
+            [date] => 1744207405
+            [text] => ✅ RECUPERACIÓN: Dispositivo restablecido
+
+📍 pc alea
+   • IP: 192.168.1.7
+   • Estado: RECUPERADO
+   • Hora de recuperación: 09/04/2025 16:03:32
+            [entities] => Array
+                (
+                    [0] => Array
+                        (
+                            [offset] => 2
+                            [length] => 38
+                            [type] => bold
+                        )
+
+                    [1] => Array
+                        (
+                            [offset] => 45
+                            [length] => 7
+                            [type] => bold
+                        )
+
+                    [2] => Array
+                        (
+                            [offset] => 62
+                            [length] => 11
+                            [type] => code
+                        )
+
+                    [3] => Array
+                        (
+                            [offset] => 87
+                            [length] => 10
+                            [type] => bold
+                        )
+
+                )
+
+        )
+
+)
+
+Mensaje enviado exitosamente
+
+¡Dispositivo RECUPERADO: pc alea (192.168.1.7)!
+Estado anterior: DOWN
+Estado actual: UP
+
+2025-04-09 16:03:32 - ✅ pc alea (192.168.1.7): ACTIVO
+
+¡Se detectaron cambios! Guardando estado...
+
+Esperando 60 segundos...
+

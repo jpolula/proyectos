@@ -1,0 +1,30 @@
+[settings]
+ping_attempts = "5"
+ping_interval = "60"
+
+[services]
+DNS Cloudflare = "#ADD8E6"
+Cloudflare = "#FAEBD7"
+GitHub = "#DCDCDC"
+DEFAULT = "#F8F8FF"
+
+[ips]
+192.168.1.1 = "ROUTER IMPULSA"
+192.168.1.12 = "ahora si valdra seguro"
+192.168.1.24 = "Mimosa campoo"
+192.168.1.141 = "mi portatil"
+192.168.1.7 = "pc alea"
+
+[icons]
+192.168.1.1 = "undefined"
+192.168.1.12 = "radio"
+192.168.1.24 = "pc"
+192.168.1.141 = "pc"
+192.168.1.7 = "pc"
+
+[connections]
+192.168.1.12 = "192.168.1.1"
+192.168.1.24 = "192.168.1.1"
+192.168.1.141 = "192.168.1.1"
+192.168.1.7 = "192.168.1.1"
+

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="es">
+<head>
+<link rel="stylesheet" type="text/css" href="base.css" />
+<link rel="stylesheet" type="text/css" href="content.css" />
+<link rel="stylesheet" type="text/css" href="nav.css" />
+<meta http-equiv="content-type" content="text/html;  charset=utf-8" />
+<title>Gestión básica de un Deployment | MODULO 5 </title>
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+<meta name="author" content="JAVI" />
+<link rel="license" type="text/html" href="http://creativecommons.org/licenses/by-sa/4.0/" />
+<meta name="generator" content="eXeLearning 2.8.1 - exelearning.net" />
+<!--[if lt IE 9]><script type="text/javascript" src="exe_html5.js"></script><![endif]-->
+<script type="text/javascript" src="exe_jquery.js"></script>
+<script type="text/javascript" src="common_i18n.js"></script>
+<script type="text/javascript" src="common.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body class="exe-web-site" id="exe-node-4"><script type="text/javascript">document.body.className+=" js"</script>
+<div id="content">
+<p id="skipNav"><a href="#main" class="sr-av">Saltar la navegación</a></p>
+<header id="header" ><div id="headerContent">MODULO 5</div></header>
+<nav id="siteNav">
+<ul>
+   <li><a href="index.html" class="daddy main-node">Despliegues: Deployments</a></li>
+   <li><a href="describiendo_un_deployment.html" class="no-ch">Describiendo un Deployment</a></li>
+   <li id="active"><a href="gestin_bsica_de_un_deployment.html" class="active no-ch">Gestión básica de un Deployment</a></li>
+   <li><a href="actualizacin_y_desactualizacin_de_un_deployment.html" class="no-ch">Actualización y desactualización de un Deployment</a></li>
+   <li><a href="crditos.html" class="no-ch">Créditos</a></li>
+</ul>
+</nav>
+<div id='topPagination'>
+<nav class="pagination noprt">
+<a href="describiendo_un_deployment.html" class="prev"><span><span>&laquo; </span>Anterior</span></a> <span class="sep">| </span><a href="actualizacin_y_desactualizacin_de_un_deployment.html" class="next"><span>Siguiente<span> &raquo;</span></span></a>
+</nav>
+</div>
+<div id="main-wrapper">
+<section id="main">
+<header id="nodeDecoration"><h1 id="nodeTitle">Gestión básica de un Deployment</h1></header>
+<article class="iDevice_wrapper textIdevice em_iDevice em_iDevice_caso" id="id5">
+<div class="iDevice emphasis1" >
+<header class="iDevice_header"><h1 class="iDeviceTitle">Ten en cuenta...</h1></header>
+<div class="iDevice_inner">
+<div class="iDevice_content_wrapper">
+<div id="ta5_128_2" class="block iDevice_content">
+<div class="exe-text"><p>En esta unidad vamos a trabajar con el recurso Deployment, vamos a crear un Deployment de un servidor nginx, usando el fichero yaml que hemos visto en la unidad anterior: <code><a href="http://localhost:51235/unidad5/resources/nginx-deployment.yaml" onclick="browseURL('http://localhost:51235/unidad5/resources/nginx-deployment.yaml',this); return false">nginx-deployment.yaml</a></code>.</p></div>
+</div>
+</div>
+</div>
+</div>
+</article>
+<article class="iDevice_wrapper textIdevice" id="id2">
+<div class="iDevice emphasis0" >
+<div id="ta2_125_2" class="block iDevice_content">
+<div class="exe-text"><h2>Creación del Deployment</h2>
+<p>Cuando creamos un Deployment, se creará un ReplicaSet asociado, que creará y controlará los Pods que hayamos indicado.</p>
+<div class="snippet-clipboard-content position-relative">
+<pre><code>kubectl apply -f nginx-deployment.yaml
+kubectl get deploy,rs,pod
+</code></pre>
+</div>
+<p>Para ver los recursos que hemos creado también podemos utilizar la instrucción:</p>
+<div class="snippet-clipboard-content position-relative">
+<pre><code>kubectl get all
+</code></pre>
+</div>
+<p>Esta orden muestra los Deployments, ReplicaSets, Pods y Services que tenemos creados en el cluster. Los Services lo estudiaremos en el siguiente módulo.</p>
+<h2><a id="user-content-escalado-de-los-deployments" class="anchor" aria-hidden="true" href="https://github.com/iesgn/curso_kubernetes_cep/blob/main/modulo5/gestionando_deployment.md#escalado-de-los-deployments"><svg class="octicon octicon-link" viewbox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"></svg></a></h2>
+<h2>Escalado de los Deployments</h2>
+<p>Como ocurría con los ReplicaSets los Deployment también se pueden escalar, aumentando o disminuyendo el número de Pods asociados. Al escalar un Deployment estamos escalando el ReplicaSet asociado en ese momento:</p>
+<div class="snippet-clipboard-content position-relative">
+<pre><code>kubectl scale deployment deployment-nginx --replicas=4
+</code></pre>
+</div>
+<h2><a id="user-content-otras-operaciones" class="anchor" aria-hidden="true" href="https://github.com/iesgn/curso_kubernetes_cep/blob/main/modulo5/gestionando_deployment.md#otras-operaciones"><svg class="octicon octicon-link" viewbox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"></svg></a></h2>
+<h2>Otras operaciones</h2>
+<p>Si queremos acceder a la aplicación, podemos utilizar la opción de <code>port-forward</code> sobre el despliegue (de nuevo recordamos que no es la forma adecuada para acceder a un servicio que se ejecuta en un Pod, pero de momento no tenemos otra). En este caso si tenemos asociados más de un Pod, la redirección de puertos se hará sobre un solo Pod (no habrá balanceo de carga):</p>
+<div class="snippet-clipboard-content position-relative">
+<pre><code>kubectl port-forward deployment/deployment-nginx 8080:80
+</code></pre>
+</div>
+<p>Si queremos ver los logs generados en los Pods de un Deployment:</p>
+<div class="snippet-clipboard-content position-relative">
+<pre><code>kubectl logs deployment/deployment-nginx
+</code></pre>
+</div>
+<p>Si queremos obtener información detallada del recurso Deployment que hemos creado:</p>
+<div class="snippet-clipboard-content position-relative">
+<pre><code>kubectl describe deployment deployment-nginx
+</code></pre>
+</div>
+<h2><a id="user-content-eliminando-el-deployment" class="anchor" aria-hidden="true" href="https://github.com/iesgn/curso_kubernetes_cep/blob/main/modulo5/gestionando_deployment.md#eliminando-el-deployment"><svg class="octicon octicon-link" viewbox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"></svg></a></h2>
+<h2>Eliminando el Deployment</h2>
+<p>Si eliminamos el Deployment se eliminarán el ReplicaSet asociado y los Pods que se estaban gestionando.</p>
+<div class="snippet-clipboard-content position-relative">
+<pre><code>kubectl delete deployment deployment-nginx
+</code></pre>
+</div></div>
+</div>
+</div>
+</article>
+<article class="iDevice_wrapper textIdevice em_iDevice em_iDevice_reproduccion" id="id8">
+<div class="iDevice emphasis1" >
+<header class="iDevice_header"><h1 class="iDeviceTitle">Vídeo: Gestión básica de un Deployment</h1></header>
+<div class="iDevice_inner">
+<div class="iDevice_content_wrapper">
+<div id="ta8_128_2" class="block iDevice_content">
+<div class="exe-text"><figure class="exe-figure exe-media position-center" style="width: 800px;"><iframe width="800" height="449" src="https://www.youtube.com/embed/dcKWO6gXhhs" allowfullscreen="allowfullscreen"></iframe>
+<figcaption class="figcaption"><span class="title"><em>Vídeo: Gestión básica de un Deployment</em></span></figcaption>
+</figure>
+<p></p></div>
+</div>
+</div>
+</div>
+</div>
+</article>
+<div id="packageLicense" class="cc cc-by-sa">
+<p><span>Obra publicada con</span> <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Licencia Creative Commons Reconocimiento Compartir igual 4.0</a></p>
+</div>
+</section>
+</div>
+<div id='bottomPagination'>
+<nav class="pagination noprt">
+<a href="describiendo_un_deployment.html" class="prev"><span><span>&laquo; </span>Anterior</span></a> <span class="sep">| </span><a href="actualizacin_y_desactualizacin_de_un_deployment.html" class="next"><span>Siguiente<span> &raquo;</span></span></a>
+</nav>
+</div>
+</div>
+<p id="made-with-eXe"><a href="https://exelearning.net/" target="_blank" rel="noopener"><span>Creado con eXeLearning<span> (Ventana nueva)</span></span></a></p><script type="text/javascript" src="_intef_js.js"></script></body></html>

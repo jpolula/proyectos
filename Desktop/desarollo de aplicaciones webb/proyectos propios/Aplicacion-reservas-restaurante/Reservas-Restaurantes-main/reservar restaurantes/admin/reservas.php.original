@@ -1,0 +1,1022 @@
+<?php
+// Incluir archivo de autenticación
+require_once 'auth.php';
+require_once '../vendor/autoload.php';
+require_once '../enviar_correo_directo.php';
+require_once 'denegacion_handler.php';
+
+// Configuración de la conexión a la base de datos
+$host = 'localhost';
+$db = 'restaurante_reservas';
+$user = 'root';
+$pass = '';
+$charset = 'utf8mb4';
+
+$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+$options = [
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_EMULATE_PREPARES => false,
+];
+
+// Conexión a la base de datos
+try {
+    $pdo = new PDO($dsn, $user, $pass, $options);
+} catch (PDOException $e) {
+    die('Error de conexión: ' . $e->getMessage());
+}
+
+// Obtener turnos para el formulario de edición
+$stmt = $pdo->query("SELECT id, nombre, hora_inicio, hora_fin FROM turnos ORDER BY id");
+$turnos = $stmt->fetchAll();
+
+// Procesar acciones
+$mensaje = '';
+$tipo_mensaje = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['accion'])) {
+        $accion = $_POST['accion'];
+        $reserva_id = isset($_POST['reserva_id']) ? (int)$_POST['reserva_id'] : 0;
+        
+        if ($reserva_id > 0) {
+if ($accion === 'modificar') {
+    // Obtener datos del formulario
+                    $fecha = isset($_POST['fecha']) ? $_POST['fecha'] : '';
+                    $hora = isset($_POST['hora']) ? $_POST['hora'] : '';
+                    $turno_id = isset($_POST['turno_id']) ? (int)$_POST['turno_id'] : 0;
+                    $zona = isset($_POST['zona']) ? $_POST['zona'] : '';
+                    $cantidad_personas = isset($_POST['cantidad_personas']) ? (int)$_POST['cantidad_personas'] : 0;
+                    $observaciones = isset($_POST['observaciones']) ? $_POST['observaciones'] : '';
+                    $necesidades_especiales = isset($_POST['necesidades_especiales']) ? $_POST['necesidades_especiales'] : '';
+                    $tiene_alergenos = isset($_POST['tiene_alergenos']) ? 1 : 0;
+                    
+                    // Validar datos
+                    if (empty($fecha) || empty($hora) || $turno_id <= 0 || empty($zona) || $cantidad_personas <= 0) {
+                        $mensaje = 'Todos los campos obligatorios deben ser completados.';
+                        $tipo_mensaje = 'error';
+                    } else {
+                        // Convertir fecha a formato Y-m-d
+                        $fecha_obj = DateTime::createFromFormat('d/m/Y', $fecha);
+                        if (!$fecha_obj) {
+                            $fecha_obj = DateTime::createFromFormat('Y-m-d', $fecha);
+}
+                        $fecha_bd = $fecha_obj ? $fecha_obj->format('Y-m-d') : $fecha;
+                        
+                        // Actualizar reserva
+                        $stmt = $pdo->prepare("
+                            UPDATE reservas 
+                            SET fecha = ?, hora = ?, turno_id = ?, zona = ?, cantidad_personas = ?, 
+                                observaciones = ?, necesidades_especiales = ?, tiene_alergenos = ?
+                            WHERE id = ?
+                        ");
+                        
+                        if ($stmt->execute([
+                            $fecha_bd, $hora, $turno_id, $zona, $cantidad_personas, 
+                            $observaciones, $necesidades_especiales, $tiene_alergenos, $reserva_id
+                        ])) {
+                            $mensaje = 'Reserva modificada correctamente.';
+                            $tipo_mensaje = 'success';
+                        } else {
+                            $mensaje = 'Error al modificar la reserva.';
+                            $tipo_mensaje = 'error';
+                        }
+                    }
+                } elseif ($accion === 'confirmar') {
+    // Incluir el archivo para verificar el aforo
+                    require_once 'verificar_aforo_admin.php';
+                    
+    // Verificar si hay suficiente aforo disponible
+                    $verificacion = verificarAforoParaConfirmar($pdo, $reserva_id);
+                    
+                    if ($verificacion['disponible']) {
+                        // Hay suficiente aforo, confirmar la reserva
+    $stmt = $pdo->prepare("UPDATE reservas SET estado = 'confirmada' WHERE id = ?");
+                        if ($stmt->execute([$reserva_id])) {
+                            // Obtener los datos de la reserva
+    $stmt = $pdo->prepare("
+                            SELECT r.*, c.nombre, c.email, c.telefono, t.nombre AS turno_nombre, 
+                                   DATE_FORMAT(r.fecha, '%d/%m/%Y') AS fecha_formateada,
+                                   TIME_FORMAT(r.hora, '%H:%i') AS hora_formateada
+                            FROM reservas r
+                            JOIN clientes c ON r.cliente_id = c.id
+                            JOIN turnos t ON r.turno_id = t.id
+                            WHERE r.id = ?
+                        ");
+                        $stmt->execute([$reserva_id]);
+                        $reserva = $stmt->fetch();
+                        
+                        if ($reserva) {
+                            // Enviar correo de confirmación
+                            try {
+                                // Usar la función de envío directo en lugar de instanciar una clase
+                                
+                                // Preparar el contenido del correo
+                                $asunto = "Confirmación de reserva - Restaurante";
+                                
+                                // Crear el cuerpo del correo en HTML
+                                $cuerpo = "
+                                    <html>
+                                    <head>
+                                        <style>
+                                            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                                            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                                            h1 { color: #2c5282; }
+                                            .info { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; }
+                                            .footer { margin-top: 30px; font-size: 0.9em; color: #666; }
+                                        </style>
+                                    </head>
+                                    <body>
+                                        <div class='container'>
+                                            <h1>¡Su reserva ha sido confirmada!</h1>
+                                            <p>Estimado/a <strong>{$reserva['nombre']}</strong>,</p>
+                                            <p>Nos complace confirmar su reserva en nuestro restaurante con los siguientes detalles:</p>
+                                            
+                                            <div class='info'>
+                                                <p><strong>Fecha:</strong> {$reserva['fecha_formateada']}</p>
+                                                <p><strong>Hora:</strong> {$reserva['hora_formateada']}</p>
+                                                <p><strong>Turno:</strong> " . ucfirst($reserva['turno_nombre']) . "</p>
+                                                <p><strong>Zona:</strong> " . ($reserva['zona'] == 'dentro' ? 'Interior' : 'Terraza') . "</p>
+                                                <p><strong>Número de personas:</strong> {$reserva['cantidad_personas']}</p>
+                                            </div>
+                                            
+                                            <p>Si necesita realizar algún cambio en su reserva, por favor contáctenos lo antes posible.</p>
+                                            
+                                            <p>¡Esperamos recibirle pronto en nuestro restaurante!</p>
+                                            
+                                            <div class='footer'>
+                                                <p>Este es un correo automático, por favor no responda a este mensaje.</p>
+                                            </div>
+                                        </div>
+                                    </body>
+                                    </html>
+                                ";
+                                
+                                // Texto alternativo para clientes de correo que no soportan HTML
+                                $texto_alternativo = "
+                                    ¡Su reserva ha sido confirmada!
+                                    
+                                    Estimado/a {$reserva['nombre']},
+                                    
+                                    Nos complace confirmar su reserva en nuestro restaurante con los siguientes detalles:
+                                    
+                                    Fecha: {$reserva['fecha_formateada']}
+                                    Hora: {$reserva['hora_formateada']}
+                                    Turno: " . ucfirst($reserva['turno_nombre']) . "
+                                    Zona: " . ($reserva['zona'] == 'dentro' ? 'Interior' : 'Terraza') . "
+                                    Número de personas: {$reserva['cantidad_personas']}
+                                    
+                                    Si necesita realizar algún cambio en su reserva, por favor contáctenos lo antes posible.
+                                    
+                                    ¡Esperamos recibirle pronto en nuestro restaurante!
+                                    
+                                    Este es un correo automático, por favor no responda a este mensaje.
+                                ";
+                                
+                                // Enviar el correo
+                                $enviado = enviar_correo_directo($reserva['email'], $asunto, $cuerpo, $texto_alternativo ?? '');
+                                
+                                if ($enviado) {
+                                    $mensaje = 'Reserva confirmada correctamente y se ha enviado un correo de confirmación al cliente.';
+                                    error_log("Correo de confirmación enviado correctamente a: {$reserva['email']}");
+                                } else {
+                                    $mensaje = 'Reserva confirmada correctamente, pero no se pudo enviar el correo de confirmación.';
+                                    error_log("Error al enviar correo de confirmación a: {$reserva['email']}");
+                                    
+                                    // Intentar enviar el correo nuevamente con configuración alternativa
+                                    try {
+                                        // Crear una nueva instancia de Mailer con configuración fresca
+                                        // Usar la función de envío directo en lugar de instanciar una clase
+                                        $enviado = enviar_correo_directo($reserva['email'], $asunto, $cuerpo, $texto_alternativo ?? '');
+                                        
+                                        if ($enviado) {
+                                            $mensaje = 'Reserva confirmada correctamente y se ha enviado un correo de confirmación al cliente (segundo intento).';
+                                            error_log("Correo de confirmación enviado correctamente en segundo intento a: {$reserva['email']}");
+                                        }
+                                    } catch (\Exception $e) {
+                                        error_log("Error en segundo intento de envío de correo: " . $e->getMessage());
+                                    }
+                                
+                            } catch (Exception $e) {
+                                $mensaje = 'Reserva confirmada correctamente, pero hubo un error al enviar el correo: ' . $e->getMessage();
+                            }
+                        } else {
+                            $mensaje = 'Reserva confirmada correctamente, pero no se pudo obtener la información para enviar el correo.';
+                        }
+                        
+                        $tipo_mensaje = 'success';
+} elseif ($accion === 'rechazar') {
+                
+    $stmt = $pdo->prepare("UPDATE reservas SET estado = 'rechazada' WHERE id = ?");
+                    if ($stmt->execute([$reserva_id])) {
+                        // Obtener los datos de la reserva
+    $stmt = $pdo->prepare("
+                            SELECT r.*, c.nombre, c.email, c.telefono, t.nombre AS turno_nombre, 
+                                   DATE_FORMAT(r.fecha, '%d/%m/%Y') AS fecha_formateada,
+                                   TIME_FORMAT(r.hora, '%H:%i') AS hora_formateada
+                            FROM reservas r
+                            JOIN clientes c ON r.cliente_id = c.id
+                            JOIN turnos t ON r.turno_id = t.id
+                            WHERE r.id = ?
+                        ");
+                        $stmt->execute([$reserva_id]);
+                        $reserva = $stmt->fetch();
+                        
+                        if ($reserva) {
+                            // Enviar correo de cancelación
+                            try {
+                                // Incluir la función de envío directo si no está incluida
+                                if (!function_exists('enviar_correo_directo')) {
+                                    require_once '../enviar_correo_directo.php';
+}
+                                
+                                // Preparar el contenido del correo
+                                $asunto = "Cancelación de reserva - Restaurante";
+                                
+                                // Crear el cuerpo del correo en HTML
+                                $cuerpo = "
+                                    <html>
+                                    <head>
+                                        <style>
+                                            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                                            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                                            h1 { color: #e53e3e; }
+                                            .info { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; }
+                                            .footer { margin-top: 30px; font-size: 0.9em; color: #666; }
+                                        </style>
+                                    </head>
+                                    <body>
+                                        <div class='container'>
+                                            <h1>Cancelación de su reserva</h1>
+                                            <p>Estimado/a <strong>{$reserva['nombre']}</strong>,</p>
+                                            <p>Lamentamos informarle que su reserva ha sido cancelada. Los detalles de la reserva eran los siguientes:</p>
+                                            
+                                            <div class='info'>
+                                                <p><strong>Fecha:</strong> {$reserva['fecha_formateada']}</p>
+                                                <p><strong>Hora:</strong> {$reserva['hora_formateada']}</p>
+                                                <p><strong>Turno:</strong> " . ucfirst($reserva['turno_nombre']) . "</p>
+                                                <p><strong>Zona:</strong> " . ($reserva['zona'] == 'dentro' ? 'Interior' : 'Terraza') . "</p>
+                                                <p><strong>Número de personas:</strong> {$reserva['cantidad_personas']}</p>
+                                            </div>
+                                            
+                                            <p>Si desea realizar una nueva reserva, puede hacerlo a través de nuestra página web o contactándonos directamente.</p>
+                                            
+                                            <p>Disculpe las molestias ocasionadas.</p>
+                                            
+                                            <div class='footer'>
+                                                <p>Este es un correo automático, por favor no responda a este mensaje.</p>
+                                            </div>
+                                        </div>
+                                    </body>
+                                    </html>
+                                ";
+                                
+                                // Texto alternativo para clientes de correo que no soportan HTML
+                                $texto_alternativo = "
+                                    Cancelación de su reserva
+                                    
+                                    Estimado/a {$reserva['nombre']},
+                                    
+                                    Lamentamos informarle que su reserva ha sido cancelada. Los detalles de la reserva eran los siguientes:
+                                    
+                                    Fecha: {$reserva['fecha_formateada']}
+                                    Hora: {$reserva['hora_formateada']}
+                                    Turno: " . ucfirst($reserva['turno_nombre']) . "
+                                    Zona: " . ($reserva['zona'] == 'dentro' ? 'Interior' : 'Terraza') . "
+                                    Número de personas: {$reserva['cantidad_personas']}
+                                    
+                                    Si desea realizar una nueva reserva, puede hacerlo a través de nuestra página web o contactándonos directamente.
+                                    
+                                    Disculpe las molestias ocasionadas.
+                                    
+                                    Este es un correo automático, por favor no responda a este mensaje.
+                                ";
+                                
+                                // Enviar el correo
+                                $enviado = enviar_correo_directo($reserva['email'], $asunto, $cuerpo, $texto_alternativo);
+                                
+                                if ($enviado) {
+                                    $mensaje = 'Reserva rechazada correctamente y se ha enviado un correo de notificación al cliente.';
+                                    error_log("Correo de cancelación enviado correctamente a: {$reserva['email']}");
+                                } else {
+                                    $mensaje = 'Reserva rechazada correctamente, pero no se pudo enviar el correo de notificación.';
+                                    error_log("Error al enviar correo de cancelación a: {$reserva['email']}");
+} catch (\Exception $e) {
+                                $mensaje = 'Reserva rechazada correctamente, pero hubo un error al enviar el correo: ' . $e->getMessage();
+                                error_log("Excepción al enviar correo de cancelación: " . $e->getMessage());
+} else {
+                            $mensaje = 'Reserva rechazada correctamente, pero no se pudo obtener la información para enviar el correo.';
+                            error_log("No se pudo obtener información de la reserva para enviar correo de cancelación. ID: {$reserva_id}");
+}
+                        
+                        $tipo_mensaje = 'success';
+} elseif ($accion === 'eliminar') {
+                
+    $stmt = $pdo->prepare("DELETE FROM reservas WHERE id = ?");
+                    if ($stmt->execute([$reserva_id])) {
+                        $mensaje = 'Reserva eliminada correctamente.';
+                        $tipo_mensaje = 'success';
+} elseif ($accion === 'confirmar') {
+    // Incluir el archivo para verificar el aforo
+                    require_once 'verificar_aforo_admin.php';
+                    
+    // Verificar si hay suficiente aforo disponible
+                    $verificacion = verificarAforoParaConfirmar($pdo, $reserva_id);
+                    
+                    if ($verificacion['disponible']) {
+                        // Hay suficiente aforo, confirmar la reserva
+    $stmt = $pdo->prepare("UPDATE reservas SET estado = 'confirmada' WHERE id = ?");
+                        if ($stmt->execute([$reserva_id])) {
+                            // Obtener los datos de la reserva
+    $stmt = $pdo->prepare("
+                            SELECT r.*, c.nombre, c.email, c.telefono, t.nombre AS turno_nombre, 
+                                   DATE_FORMAT(r.fecha, '%d/%m/%Y') AS fecha_formateada,
+                                   TIME_FORMAT(r.hora, '%H:%i') AS hora_formateada
+                            FROM reservas r
+                            JOIN clientes c ON r.cliente_id = c.id
+                            JOIN turnos t ON r.turno_id = t.id
+                            WHERE r.id = ?
+                        ");
+                        $stmt->execute([$reserva_id]);
+                        $reserva = $stmt->fetch();
+                        
+                        if ($reserva) {
+                            // Enviar correo de confirmación
+                            try {
+                                // Usar la función de envío directo en lugar de instanciar una clase
+                                
+                                // Preparar el contenido del correo
+                                $asunto = "Confirmación de reserva - Restaurante";
+                                
+                                // Crear el cuerpo del correo en HTML
+                                $cuerpo = "
+                                    <html>
+                                    <head>
+                                        <style>
+                                            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                                            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                                            h1 { color: #2c5282; }
+                                            .info { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; }
+                                            .footer { margin-top: 30px; font-size: 0.9em; color: #666; }
+                                        </style>
+                                    </head>
+                                    <body>
+                                        <div class='container'>
+                                            <h1>¡Su reserva ha sido confirmada!</h1>
+                                            <p>Estimado/a <strong>{$reserva['nombre']}</strong>,</p>
+                                            <p>Nos complace confirmar su reserva en nuestro restaurante con los siguientes detalles:</p>
+                                            
+                                            <div class='info'>
+                                                <p><strong>Fecha:</strong> {$reserva['fecha_formateada']}</p>
+                                                <p><strong>Hora:</strong> {$reserva['hora_formateada']}</p>
+                                                <p><strong>Turno:</strong> " . ucfirst($reserva['turno_nombre']) . "</p>
+                                                <p><strong>Zona:</strong> " . ($reserva['zona'] == 'dentro' ? 'Interior' : 'Terraza') . "</p>
+                                                <p><strong>Número de personas:</strong> {$reserva['cantidad_personas']}</p>
+                                            </div>
+                                            
+                                            <p>Si necesita realizar algún cambio en su reserva, por favor contáctenos lo antes posible.</p>
+                                            
+                                            <p>¡Esperamos recibirle pronto en nuestro restaurante!</p>
+                                            
+                                            <div class='footer'>
+                                                <p>Este es un correo automático, por favor no responda a este mensaje.</p>
+                                            </div>
+                                        </div>
+                                    </body>
+                                    </html>
+                                ";
+                                
+                                // Texto alternativo para clientes de correo que no soportan HTML
+                                $texto_alternativo = "
+                                    ¡Su reserva ha sido confirmada!
+                                    
+                                    Estimado/a {$reserva['nombre']},
+                                    
+                                    Nos complace confirmar su reserva en nuestro restaurante con los siguientes detalles:
+                                    
+                                    Fecha: {$reserva['fecha_formateada']}
+                                    Hora: {$reserva['hora_formateada']}
+                                    Turno: " . ucfirst($reserva['turno_nombre']) . "
+                                    Zona: " . ($reserva['zona'] == 'dentro' ? 'Interior' : 'Terraza') . "
+                                    Número de personas: {$reserva['cantidad_personas']}
+                                    
+                                    Si necesita realizar algún cambio en su reserva, por favor contáctenos lo antes posible.
+                                    
+                                    ¡Esperamos recibirle pronto en nuestro restaurante!
+                                    
+                                    Este es un correo automático, por favor no responda a este mensaje.
+                                ";
+                                
+                                // Enviar el correo
+                                $enviado = enviar_correo_directo($reserva['email'], $asunto, $cuerpo, $texto_alternativo ?? '');
+                                
+                                if ($enviado) {
+                                    $mensaje = 'Reserva confirmada correctamente y se ha enviado un correo de confirmación al cliente.';
+                                    error_log("Correo de confirmación enviado correctamente a: {$reserva['email']}");
+                                } else {
+                                    $mensaje = 'Reserva confirmada correctamente, pero no se pudo enviar el correo de confirmación.';
+                                    error_log("Error al enviar correo de confirmación a: {$reserva['email']}");
+                                    
+                                    // Intentar enviar el correo nuevamente con configuración alternativa
+                                    try {
+                                        // Crear una nueva instancia de Mailer con configuración fresca
+                                        // Usar la función de envío directo en lugar de instanciar una clase
+                                        $enviado = enviar_correo_directo($reserva['email'], $asunto, $cuerpo, $texto_alternativo ?? '');
+                                        
+                                        if ($enviado) {
+                                            $mensaje = 'Reserva confirmada correctamente y se ha enviado un correo de confirmación al cliente (segundo intento).';
+                                            error_log("Correo de confirmación enviado correctamente en segundo intento a: {$reserva['email']}");
+                                        }
+                                    } catch (\Exception $e) {
+                                        error_log("Error en segundo intento de envío de correo: " . $e->getMessage());
+                                    }
+                                
+                            } catch (Exception $e) {
+                                $mensaje = 'Reserva confirmada correctamente, pero hubo un error al enviar el correo: ' . $e->getMessage();
+                            }
+                        } else {
+                            $mensaje = 'Reserva confirmada correctamente, pero no se pudo obtener la información para enviar el correo.';
+                        }
+                        
+                        $tipo_mensaje = 'success';
+} elseif ($accion === 'rechazar') {
+                    // Usar el manejador de denegación para procesar la reserva y enviar el correo
+                    $resultado = procesar_denegacion_reserva($pdo, $reserva_id);
+                    
+                    // Establecer mensaje y tipo de mensaje según el resultado
+                    $mensaje = $resultado['mensaje'];
+                    $tipo_mensaje = $resultado['tipo_mensaje'];
+                
+    } elseif ($accion === 'eliminar') {
+        $stmt = $pdo->prepare("DELETE FROM reservas WHERE id = ?");
+                    if ($stmt->execute([$reserva_id])) {
+                        $mensaje = 'Reserva eliminada correctamente.';
+                        $tipo_mensaje = 'success';
+    }
+}
+}
+
+// Filtrar reservas
+$estado = isset($_GET['estado']) ? $_GET['estado'] : '';
+$fecha_inicio = isset($_GET['fecha_inicio']) ? $_GET['fecha_inicio'] : date('Y-m-d');
+$fecha_fin = isset($_GET['fecha_fin']) ? $_GET['fecha_fin'] : date('Y-m-d', strtotime('+30 days'));
+
+// Verificar si la columna fecha_creacion existe en la tabla reservas
+$columna_existe = false;
+try {
+    $check = $pdo->prepare("SHOW COLUMNS FROM reservas LIKE 'fecha_creacion'");
+    $check->execute();
+    $columna_existe = ($check->rowCount() > 0);
+} catch (PDOException $e) {
+    // Si hay un error, asumimos que la columna no existe
+    $columna_existe = false;
+}
+
+// Construir consulta
+if ($columna_existe) {
+    $sql = "
+        SELECT r.*, c.nombre, c.email, c.telefono, t.nombre AS turno_nombre,
+        DATE_FORMAT(r.fecha_creacion, '%d/%m/%Y %H:%i') AS fecha_hora_creacion
+        FROM reservas r
+        JOIN clientes c ON r.cliente_id = c.id
+        JOIN turnos t ON r.turno_id = t.id
+        WHERE 1=1
+    ";
+} else {
+    $sql = "
+        SELECT r.*, c.nombre, c.email, c.telefono, t.nombre AS turno_nombre,
+        NULL AS fecha_hora_creacion
+        FROM reservas r
+        JOIN clientes c ON r.cliente_id = c.id
+        JOIN turnos t ON r.turno_id = t.id
+        WHERE 1=1
+    ";
+}
+
+$params = [];
+
+if (!empty($estado)) {
+    $sql .= " AND r.estado = ?";
+    $params[] = $estado;
+}
+
+if (!empty($fecha_inicio)) {
+    $sql .= " AND r.fecha >= ?";
+    $params[] = $fecha_inicio;
+}
+
+if (!empty($fecha_fin)) {
+    $sql .= " AND r.fecha <= ?";
+    $params[] = $fecha_fin;
+}
+
+// Ordenar las reservas pendientes por ID (más recientes primero)
+// Para otros estados, ordenar por fecha y hora
+if (!empty($estado) && $estado === 'pendiente') {
+    $sql .= " ORDER BY r.id DESC";
+} else {
+    $sql .= " ORDER BY r.fecha DESC, r.hora ASC";
+}
+
+$stmt = $pdo->prepare($sql);
+$stmt->execute($params);
+$reservas = $stmt->fetchAll();
+
+// Título de la página
+$pageTitle = 'Gestión de Reservas';
+?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo $pageTitle; ?> - Sistema de Reservas</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Flatpickr para selección de fechas -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Barra de navegación superior -->
+    <nav class="bg-blue-600 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="index.php" class="text-xl font-bold">Sistema de Reservas</a>
+                </div>
+                <div class="flex items-center">
+                    <span class="mr-4">Bienvenido, <?php echo htmlspecialchars($_SESSION['admin_usuario']); ?></span>
+                    <a href="logout.php" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm font-medium transition duration-300">
+                        Cerrar Sesión
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenido principal -->
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="px-4 py-6 sm:px-0">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-semibold text-gray-900"><?php echo $pageTitle; ?></h1>
+                <a href="index.php" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-300">
+                    Volver al Panel
+                </a>
+            </div>
+            
+            <?php if (!empty($mensaje)): ?>
+                <div class="mb-4 p-4 rounded-md <?php echo $tipo_mensaje === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'; ?>">
+                    <?php echo $mensaje; ?>
+                </div>
+            <?php endif; ?>
+            
+            <!-- Filtros -->
+            <div class="bg-white p-4 rounded-md shadow-md mb-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Filtrar Reservas</h2>
+                <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" method="GET" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="estado" class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                        <select id="estado" name="estado" class="w-full p-2 border border-gray-300 rounded-md">
+                            <option value="">Todos los estados</option>
+                            <option value="pendiente" <?php echo $estado === 'pendiente' ? 'selected' : ''; ?>>Pendiente</option>
+                            <option value="confirmada" <?php echo $estado === 'confirmada' ? 'selected' : ''; ?>>Confirmada</option>
+                            <option value="rechazada" <?php echo $estado === 'rechazada' ? 'selected' : ''; ?>>Rechazada</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="fecha_inicio" class="block text-sm font-medium text-gray-700 mb-1">Fecha Inicio</label>
+                        <input type="text" id="fecha_inicio" name="fecha_inicio" class="w-full p-2 border border-gray-300 rounded-md" value="<?php echo $fecha_inicio; ?>">
+                    </div>
+                    <div>
+                        <label for="fecha_fin" class="block text-sm font-medium text-gray-700 mb-1">Fecha Fin</label>
+                        <input type="text" id="fecha_fin" name="fecha_fin" class="w-full p-2 border border-gray-300 rounded-md" value="<?php echo $fecha_fin; ?>">
+                    </div>
+                    <div class="md:col-span-3">
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-300">
+                            Filtrar
+                        </button>
+                        <a href="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" class="ml-2 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-300">
+                            Limpiar Filtros
+                        </a>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Tabla de Reservas -->
+            <div class="bg-white shadow overflow-hidden sm:rounded-md overflow-x-auto">
+                <?php if (count($reservas) > 0): ?>
+                    <table class="min-w-full divide-y divide-gray-200 table-fixed">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">ID</th>
+                                <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
+                                <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha y Hora</th>
+                                <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Turno / Zona</th>
+                                <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Personas</th>
+                                <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Observaciones</th>
+                                <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Estado</th>
+                                <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Creada el</th>
+                                <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <?php foreach ($reservas as $reserva): ?>
+                                <tr>
+                                    <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <?php echo $reserva['id']; ?>
+                                    </td>
+                                    <td class="px-3 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900"><?php echo htmlspecialchars($reserva['nombre']); ?></div>
+                                        <div class="text-sm text-gray-500"><?php echo htmlspecialchars($reserva['email']); ?></div>
+                                        <div class="text-sm text-gray-500"><?php echo htmlspecialchars($reserva['telefono']); ?></div>
+                                    </td>
+                                    <td class="px-3 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900"><?php echo date('d/m/Y', strtotime($reserva['fecha'])); ?></div>
+                                        <div class="text-sm text-gray-500"><?php echo date('H:i', strtotime($reserva['hora'])); ?></div>
+                                    </td>
+                                    <td class="px-3 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900"><?php echo ucfirst($reserva['turno_nombre']); ?></div>
+                                        <div class="text-sm text-gray-500"><?php echo $reserva['zona'] === 'dentro' ? 'Interior' : 'Terraza'; ?></div>
+                                    </td>
+                                    <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <?php echo $reserva['cantidad_personas']; ?>
+                                        <?php if ($reserva['tiene_alergenos']): ?>
+                                            <span class="ml-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                <i class="fas fa-exclamation-triangle mr-1"></i> Alérgenos
+                                            </span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">
+                                        <?php 
+                                        // Mostrar observaciones si las hay (incluyen alérgenos)
+                                        if (!empty($reserva['observaciones'])) {
+                                            echo '<div class="mb-2">';
+                                            echo '<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-gray-100 text-gray-800 mr-1">';
+                                            echo '<i class="fas fa-comment mr-1"></i> Observaciones';
+                                            echo '</span><br>';
+                                            
+                                            // Resaltar los alérgenos si están presentes
+                                            $obs = $reserva['observaciones'];
+                                            if (strpos(strtolower($obs), "alérgenos:") !== false || strpos(strtolower($obs), "alergenos:") !== false) {
+                                                // Dividir el texto para resaltar la parte de alérgenos
+                                                $pattern = "/(.*?)(alérgenos:|alergenos:)(.*)/is";
+                                                if (preg_match($pattern, $obs, $matches)) {
+                                                    // Parte antes de "Alérgenos:"
+                                                    if (!empty(trim($matches[1]))) {
+                                                        echo '<div class="my-1">' . nl2br(htmlspecialchars(trim($matches[1]))) . '</div>';
+}
+                                                    
+                                                    // Parte de alérgenos
+                                                    echo '<div class="my-1 p-1 bg-yellow-50 border-l-4 border-yellow-400">';
+                                                    echo '<strong class="text-yellow-700">' . $matches[2] . '</strong>';
+                                                    echo nl2br(htmlspecialchars($matches[3]));
+                                                    echo '</div>';
+                                                } else {
+                                                    echo nl2br(htmlspecialchars($obs));
+} else {
+                                                echo nl2br(htmlspecialchars($obs));
+}
+                                            
+                                            echo '</div>';
+}
+                                        
+                                        // Mostrar necesidades especiales si las hay (SOLO UNA VEZ)
+                                        if (!empty($reserva['necesidades_especiales'])) {
+                                            echo '<div class="mt-2">';
+                                            echo '<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-blue-100 text-blue-800 mr-1">';
+                                            echo '<i class="fas fa-info-circle mr-1"></i> Necesidades especiales';
+                                            echo '</span><br>';
+                                            echo '<div class="mt-1 p-2 bg-blue-50 border-l-4 border-blue-300 text-blue-800">';
+                                            echo nl2br(htmlspecialchars($reserva['necesidades_especiales']));
+                                            echo '</div></div>';
+}
+                                        
+                                        // Si no hay nada que mostrar
+                                        if (empty($reserva['observaciones']) && empty($reserva['necesidades_especiales'])) {
+                                            echo '<span class="text-gray-400">Sin información adicional</span>';
+}
+                                        ?>
+                                    </td>
+                                    <td class="px-3 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                            <?php 
+                                            if ($reserva['estado'] === 'confirmada') {
+                                                echo 'bg-green-100 text-green-800';
+                                            } elseif ($reserva['estado'] === 'rechazada') {
+                                                echo 'bg-red-100 text-red-800';
+                                            } else {
+                                                echo 'bg-yellow-100 text-yellow-800';
+}
+                                            ?>">
+                                            <?php echo ucfirst($reserva['estado']); ?>
+                                        </span>
+                                    </td>
+                                    <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <?php if (!empty($reserva['fecha_hora_creacion'])): ?>
+                                            <div class="text-sm text-gray-900"><?php echo $reserva['fecha_hora_creacion']; ?></div>
+                                        <?php else: ?>
+                                            <span class="text-gray-400">No disponible</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="px-3 py-4 whitespace-nowrap text-sm font-medium">
+                                        <div class="grid grid-cols-1 gap-2 min-w-[150px]">
+                                            <!-- Botón Modificar -->
+                                            <button type="button" 
+                                                onclick="abrirModalEditar(
+                                                    '<?php echo $reserva['id']; ?>', 
+                                                    '<?php echo date('d/m/Y', strtotime($reserva['fecha'])); ?>', 
+                                                    '<?php echo date('H:i', strtotime($reserva['hora'])); ?>', 
+                                                    '<?php echo $reserva['turno_id']; ?>', 
+                                                    '<?php echo $reserva['zona']; ?>', 
+                                                    '<?php echo $reserva['cantidad_personas']; ?>', 
+                                                    '<?php echo addslashes($reserva['observaciones'] ?? ''); ?>', 
+                                                    '<?php echo addslashes($reserva['necesidades_especiales'] ?? ''); ?>', 
+                                                    '<?php echo $reserva['tiene_alergenos'] ? '1' : '0'; ?>'
+                                                )" 
+                                                class="w-full flex items-center justify-center px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition-colors cursor-pointer">
+                                                <i class="fas fa-edit mr-2"></i> Modificar
+                                            </button>
+                                            
+                                            <!-- Botones Confirmar/Rechazar (solo para reservas pendientes) -->
+                                            <?php if ($reserva['estado'] === 'pendiente'): ?>
+                                                <button type="button" 
+                                                    onclick="confirmarReserva(<?php echo $reserva['id']; ?>)" 
+                                                    data-reserva-id="<?php echo $reserva['id']; ?>" 
+                                                    data-accion="confirmar" 
+                                                    class="w-full flex items-center justify-center px-3 py-2 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition-colors">
+                                                    <i class="fas fa-check mr-2"></i> Aceptar
+                                                </button>
+                                                
+                                                <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" class="m-0" onsubmit="return confirm('¿Está seguro de que desea rechazar esta reserva? Se enviará un correo de notificación al cliente.');">
+                                                    <input type="hidden" name="reserva_id" value="<?php echo $reserva['id']; ?>">
+                                                    <input type="hidden" name="accion" value="rechazar">
+                                                    <button type="submit" class="w-full flex items-center justify-center px-3 py-2 bg-orange-600 text-white text-sm font-medium rounded hover:bg-orange-700 transition-colors">
+                                                        <i class="fas fa-times mr-2"></i> Denegar
+                                                    </button>
+                                                </form>
+                                            <?php endif; ?>
+                                            
+                                            <!-- Botón Eliminar -->
+                                            <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" class="m-0" onsubmit="return confirm('¿Estás seguro de eliminar esta reserva? Esta acción no se puede deshacer.');">
+                                                <input type="hidden" name="reserva_id" value="<?php echo $reserva['id']; ?>">
+                                                <input type="hidden" name="accion" value="eliminar">
+                                                <button type="submit" class="w-full flex items-center justify-center px-3 py-2 bg-red-600 text-white text-sm font-medium rounded hover:bg-red-700 transition-colors">
+                                                    <i class="fas fa-trash mr-2"></i> Eliminar
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php else: ?>
+                    <div class="p-6 text-center text-gray-500">
+                        No se encontraron reservas con los filtros seleccionados.
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pie de página -->
+    <footer class="bg-white border-t border-gray-200 py-4 mt-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <p class="text-center text-gray-500 text-sm">
+                &copy; <?php echo date('Y'); ?> Sistema de Reservas de Restaurantes. Todos los derechos reservados.
+            </p>
+        </div>
+    </footer>
+
+    <!-- Modal de Edición de Reserva -->
+    <div id="modalEditarReserva" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-screen overflow-y-auto">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-medium text-gray-900">Modificar Reserva</h3>
+                    <button type="button" onclick="cerrarModal()" class="text-gray-400 hover:text-gray-500">
+                        <span class="sr-only">Cerrar</span>
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <form id="formEditarReserva" method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>">
+                <input type="hidden" name="accion" value="modificar">
+                <input type="hidden" id="reserva_id" name="reserva_id" value="">
+                
+                <div class="px-6 py-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Fecha -->
+                        <div>
+                            <label for="fecha" class="block text-sm font-medium text-gray-700 mb-1">Fecha *</label>
+                            <input type="text" id="fecha" name="fecha" class="w-full p-2 border border-gray-300 rounded-md" required>
+                        </div>
+                        
+                        <!-- Hora -->
+                        <div>
+                            <label for="hora" class="block text-sm font-medium text-gray-700 mb-1">Hora *</label>
+                            <input type="text" id="hora" name="hora" class="w-full p-2 border border-gray-300 rounded-md" required>
+                        </div>
+                        
+                        <!-- Turno -->
+                        <div>
+                            <label for="turno_id" class="block text-sm font-medium text-gray-700 mb-1">Turno *</label>
+                            <select id="turno_id" name="turno_id" class="w-full p-2 border border-gray-300 rounded-md" required>
+                                <option value="">Seleccionar turno</option>
+                                <?php foreach ($turnos as $turno): ?>
+                                    <option value="<?php echo $turno['id']; ?>" data-inicio="<?php echo $turno['hora_inicio']; ?>" data-fin="<?php echo $turno['hora_fin']; ?>">
+                                        <?php echo ucfirst($turno['nombre']); ?> (<?php echo substr($turno['hora_inicio'], 0, 5); ?> - <?php echo substr($turno['hora_fin'], 0, 5); ?>)
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        
+                        <!-- Zona -->
+                        <div>
+                            <label for="zona" class="block text-sm font-medium text-gray-700 mb-1">Zona *</label>
+                            <select id="zona" name="zona" class="w-full p-2 border border-gray-300 rounded-md" required>
+                                <option value="">Seleccionar zona</option>
+                                <option value="dentro">Interior</option>
+                                <option value="fuera">Terraza</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Número de personas -->
+                        <div>
+                            <label for="cantidad_personas" class="block text-sm font-medium text-gray-700 mb-1">Número de personas *</label>
+                            <input type="number" id="cantidad_personas" name="cantidad_personas" min="1" class="w-full p-2 border border-gray-300 rounded-md" required>
+                        </div>
+                        
+                        <!-- Alérgenos -->
+                        <div class="flex items-center mt-4">
+                            <input type="checkbox" id="tiene_alergenos" name="tiene_alergenos" class="h-4 w-4 text-blue-600 border-gray-300 rounded">
+                            <label for="tiene_alergenos" class="ml-2 block text-sm text-gray-700">
+                                Tiene alérgenos o intolerancias
+                            </label>
+                        </div>
+                        
+                        <!-- Observaciones -->
+                        <div class="md:col-span-2">
+                            <label for="observaciones" class="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
+                            <textarea id="observaciones" name="observaciones" rows="3" class="w-full p-2 border border-gray-300 rounded-md"></textarea>
+                        </div>
+                        
+                        <!-- Necesidades especiales -->
+                        <div class="md:col-span-2">
+                            <label for="necesidades_especiales" class="block text-sm font-medium text-gray-700 mb-1">Necesidades especiales</label>
+                            <textarea id="necesidades_especiales" name="necesidades_especiales" rows="3" class="w-full p-2 border border-gray-300 rounded-md"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="px-6 py-4 bg-gray-50 text-right">
+                    <button type="button" onclick="cerrarModal()" class="py-2 px-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mr-2">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Guardar cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Obtener la fecha actual en formato YYYY-MM-DD
+        const hoy = new Date().toISOString().split('T')[0];
+        
+        // Inicializar Flatpickr para los selectores de fecha
+        flatpickr("#fecha_inicio", {
+            dateFormat: "Y-m-d",
+            locale: "es",
+            allowInput: true,
+            minDate: hoy // Establecer la fecha mínima como hoy
+        });
+        
+        flatpickr("#fecha_fin", {
+            dateFormat: "Y-m-d",
+            locale: "es",
+            allowInput: true,
+            minDate: hoy // Establecer la fecha mínima como hoy
+        });
+        
+        // Inicializar Flatpickr para el selector de fecha en el modal
+        flatpickr("#fecha", {
+            dateFormat: "d/m/Y",
+            locale: "es",
+            allowInput: true,
+            minDate: hoy // Establecer la fecha mínima como hoy
+        });
+        
+        // Inicializar Flatpickr para el selector de hora en el modal
+        flatpickr("#hora", {
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            time_24hr: true,
+            minuteIncrement: 15
+        });
+        
+        // Funciones para el modal
+        function abrirModalEditar(id, fecha, hora, turnoId, zona, personas, observaciones, necesidades, tieneAlergenos) {
+            document.getElementById('reserva_id').value = id;
+            document.getElementById('fecha').value = fecha;
+            document.getElementById('hora').value = hora;
+            document.getElementById('turno_id').value = turnoId;
+            document.getElementById('zona').value = zona;
+            document.getElementById('cantidad_personas').value = personas;
+            document.getElementById('observaciones').value = observaciones || '';
+            document.getElementById('necesidades_especiales').value = necesidades || '';
+            document.getElementById('tiene_alergenos').checked = tieneAlergenos === '1';
+            
+            document.getElementById('modalEditarReserva').classList.remove('hidden');
+}
+        
+        function cerrarModal() {
+            document.getElementById('modalEditarReserva').classList.add('hidden');
+}
+        
+        // Función para confirmar reserva mediante AJAX
+        function confirmarReserva(reservaId) {
+            if (confirm('¿Está seguro de que desea confirmar esta reserva?')) {
+                // Mostrar indicador de carga
+                const btnConfirmar = document.querySelector(`button[data-reserva-id="${reservaId}"][data-accion="confirmar"]`);
+                if (btnConfirmar) {
+                    btnConfirmar.disabled = true;
+                    btnConfirmar.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Procesando...';
+}
+                
+                // Realizar la petición AJAX
+                const formData = new FormData();
+                formData.append('reserva_id', reservaId);
+                
+                fetch('confirmar_reserva_admin.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Mostrar mensaje de resultado
+                    const mensajeDiv = document.createElement('div');
+                    mensajeDiv.className = data.exito ? 'bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4' : 'bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4';
+                    mensajeDiv.innerHTML = `<p>${data.mensaje}</p>`;
+                    
+                    const contenedor = document.querySelector('.px-4.py-6.sm\\:px-0');
+                    if (contenedor) {
+                        contenedor.insertBefore(mensajeDiv, contenedor.firstChild);
+}
+                    
+                    // Si fue exitoso, actualizar la página después de 2 segundos
+                    if (data.exito && data.redireccionar) {
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2000);
+                    } else {
+                        // Restaurar el botón
+                        if (btnConfirmar) {
+                            btnConfirmar.disabled = false;
+                            btnConfirmar.innerHTML = 'Confirmar';
+}
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Ha ocurrido un error al procesar la solicitud.');
+                    
+                    // Restaurar el botón
+                    if (btnConfirmar) {
+                        btnConfirmar.disabled = false;
+                        btnConfirmar.innerHTML = 'Confirmar';
+});
+}
+    </script>
+</body>
+</html>
+
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+?>

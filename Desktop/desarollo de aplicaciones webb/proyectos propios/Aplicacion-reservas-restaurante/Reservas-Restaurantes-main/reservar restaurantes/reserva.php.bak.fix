@@ -1,0 +1,896 @@
+<?php
+// Archivo reserva.php - Página para seleccionar fecha, turno y zona de la reserva
+session_start();
+
+// Verificar si el usuario ha completado el paso anterior (datos personales)
+if (!isset($_SESSION['nombre']) || !isset($_SESSION['email']) || !isset($_SESSION['telefono']) || !isset($_SESSION['num_personas'])) {
+    // Redirigir al usuario al formulario inicial
+    header('Location: index.php');
+    exit;
+}
+
+// Configuración de la base de datos
+$host = 'localhost';
+$db = 'restaurante_reservas';
+$user = 'root';
+$pass = '';
+$charset = 'utf8mb4';
+
+$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+$options = [
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_EMULATE_PREPARES => false,
+];
+
+// Inicializar la conexión a la base de datos
+$pdo = null;
+try {
+    $pdo = new PDO($dsn, $user, $pass, $options);
+} catch (PDOException $e) {
+    $error_mensaje = "Error de conexión a la base de datos: " . $e->getMessage();
+    // Podríamos mostrar un mensaje de error más amigable al usuario
+}
+
+// Obtener información de los turnos desde la base de datos
+$turnos = [];
+if ($pdo) {
+    try {
+        $stmt = $pdo->query("SELECT id, nombre, hora_inicio, hora_fin FROM turnos ORDER BY id");
+        $turnos = $stmt->fetchAll();
+    } catch (PDOException $e) {
+        // Silenciar error y usar valores predeterminados
+    }
+}
+
+// Si no se pudieron obtener los turnos de la base de datos, usar valores predeterminados
+if (empty($turnos)) {
+    $turnos = [
+        ['id' => 1, 'nombre' => 'mediodia', 'hora_inicio' => '13:00', 'hora_fin' => '16:00'],
+        ['id' => 2, 'nombre' => 'noche', 'hora_inicio' => '20:00', 'hora_fin' => '23:00']
+    ];
+}
+
+// Obtener el número máximo de personas sin aprobación desde la base de datos
+$max_personas_sin_aprobacion = 8; // Valor por defecto
+if ($pdo) {
+    try {
+        $stmt = $pdo->query("SELECT max_personas_sin_aprobacion FROM configuracion WHERE id = 1");
+        $config = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($config) {
+            $max_personas_sin_aprobacion = $config['max_personas_sin_aprobacion'];
+        }
+    } catch (PDOException $e) {
+        // Silenciar error y usar valor por defecto
+    }
+}
+
+// Obtener los días disponibles (sin limitarse a mayo 2025)
+$dias_disponibles = [];
+if ($pdo) {
+    try {
+        $stmt = $pdo->query("
+            SELECT DISTINCT fecha 
+            FROM dias_disponibles 
+            WHERE disponible = 1 
+            ORDER BY fecha
+        ");
+        $dias_disponibles = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    } catch (PDOException $e) {
+        // Si hay un error, usar un array vacío
+        $dias_disponibles = [];
+    }
+}
+
+// Obtener el rango de fechas disponibles
+$hoy = date('Y-m-d'); // Fecha actual
+$fecha_max = date('Y-m-d', strtotime('+1 year')); // Por defecto, un año desde hoy
+
+// Filtrar los días disponibles para eliminar fechas pasadas
+if (!empty($dias_disponibles)) {
+    $dias_disponibles = array_filter($dias_disponibles, function($dia) use ($hoy) {
+        return $dia >= $hoy;
+    });
+    
+    // Si hay días disponibles después de filtrar, usar el rango de esos días
+    if (!empty($dias_disponibles)) {
+        sort($dias_disponibles);
+        $fecha_min = $dias_disponibles[0];
+        $fecha_max = end($dias_disponibles);
+        reset($dias_disponibles); // Restaurar el puntero del array
+    } else {
+        // Si no quedan días disponibles después de filtrar, usar la fecha actual
+        $fecha_min = $hoy;
+    }
+} else {
+    // Si no hay días disponibles, usar la fecha actual
+    $fecha_min = $hoy;
+}
+
+// Extraer año y mes mínimos y máximos para el calendario
+$min_year = date('Y', strtotime($fecha_min));
+$min_month = date('n', strtotime($fecha_min));
+$max_year = date('Y', strtotime($fecha_max));
+$max_month = date('n', strtotime($fecha_max));
+
+// Convertir el array de días disponibles a formato JSON para JavaScript
+$dias_disponibles_json = json_encode($dias_disponibles);
+
+// Crear un array para identificar qué días están disponibles
+$calendario_disponibilidad = [];
+foreach ($dias_disponibles as $dia) {
+    $calendario_disponibilidad[$dia] = true;
+}
+
+// Convertir a JSON para usar en JavaScript
+$calendario_disponibilidad_json = json_encode($calendario_disponibilidad);
+
+// Pasar los rangos de fechas a JavaScript
+$fecha_min_json = json_encode($fecha_min);
+$fecha_max_json = json_encode($fecha_max);
+
+// Procesar el formulario cuando se envía
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Validar y recoger los datos de la reserva
+    $fecha = isset($_POST['fecha']) ? trim($_POST['fecha']) : '';
+    $turno_id = isset($_POST['turno']) ? (int)$_POST['turno'] : 0;
+    $zona = isset($_POST['zona']) ? trim($_POST['zona']) : '';
+    $hora = isset($_POST['hora']) ? trim($_POST['hora']) : '';
+    
+    // Validación básica
+    $errores = [];
+    
+    if (empty($fecha)) {
+        $errores['fecha'] = 'La fecha es obligatoria';
+    }
+    
+    if ($turno_id <= 0) {
+        $errores['turno'] = 'El turno es obligatorio';
+    }
+    
+    if (empty($zona)) {
+        $errores['zona'] = 'La zona es obligatoria';
+    }
+    
+    if (empty($hora)) {
+        $errores['hora'] = 'La hora es obligatoria';
+    }
+    
+    // Verificar disponibilidad en la fecha, turno y zona seleccionados
+    if (empty($errores)) {
+        try {
+            // Verificar si la fecha es válida
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
+                $errores['fecha'] = 'El formato de fecha no es válido. Debe ser YYYY-MM-DD.';
+                error_log("Formato de fecha inválido: $fecha");
+            } 
+            // Verificar si el turno es válido
+            else if (!in_array($turno_id, [1, 2])) {
+                $errores['turno'] = 'El turno seleccionado no es válido.';
+                error_log("Turno inválido: $turno_id");
+            }
+            // Verificar si la zona es válida
+            else if (!in_array($zona, ['dentro', 'fuera'])) {
+                $errores['zona'] = 'La zona seleccionada no es válida.';
+                error_log("Zona inválida: $zona");
+            }
+            else {
+                // Verificar si hay bloqueos
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM bloqueos WHERE fecha = ? AND zona = ? AND turno_id = ?");
+                $stmt->execute([$fecha, $zona, $turno_id]);
+                $bloqueado = ($stmt->fetchColumn() > 0);
+                
+                if ($bloqueado) {
+                    $errores['disponibilidad'] = 'Lo sentimos, la fecha seleccionada está bloqueada para reservas.';
+                    error_log("Fecha bloqueada: $fecha, turno_id: $turno_id, zona: $zona");
+                } else {
+                    // Obtener la capacidad máxima para esa fecha, zona y turno
+                    $stmt = $pdo->prepare("SELECT aforo_maximo FROM capacidad WHERE fecha = ? AND zona = ? AND turno_id = ?");
+                    $stmt->execute([$fecha, $zona, $turno_id]);
+                    $aforo_maximo = $stmt->fetchColumn();
+                    
+                    // Si no hay configuración específica, obtener la capacidad por defecto
+                    if ($aforo_maximo === false) {
+                        $campo_capacidad = 'capacidad_' . $zona . '_' . $turno_id;
+                        $stmt = $pdo->prepare("SELECT $campo_capacidad FROM configuracion WHERE id = 1");
+                        $stmt->execute();
+                        $aforo_maximo = $stmt->fetchColumn();
+                        
+                        // Si aún no hay valor, usar un valor por defecto
+                        if ($aforo_maximo === false) {
+                            $aforo_maximo = ($zona == 'dentro') ? 30 : 20;
+                        }
+                    }
+                    
+                    // Obtener el número de personas ya reservadas
+                    $stmt = $pdo->prepare("SELECT SUM(cantidad_personas) as total_reservado FROM reservas WHERE fecha = ? AND zona = ? AND turno_id = ? AND estado = 'confirmada'");
+                    $stmt->execute([$fecha, $zona, $turno_id]);
+                    $resultado = $stmt->fetch();
+                    $total_reservado = $resultado['total_reservado'] ?: 0;
+                    
+                    // Calcular si hay suficiente aforo disponible
+                    $num_personas = isset($_SESSION['num_personas']) ? (int)$_SESSION['num_personas'] : 0;
+                    $aforo_disponible = $aforo_maximo - $total_reservado;
+                    
+                    if ($aforo_disponible < $num_personas) {
+                        $errores['disponibilidad'] = "Lo sentimos, no hay suficiente aforo disponible para {$num_personas} personas en la zona y turno seleccionados.";
+                        error_log("Aforo insuficiente: $fecha, turno_id: $turno_id, zona: $zona, aforo_disponible: $aforo_disponible, personas_solicitadas: $num_personas");
+                    }
+                }
+            }
+        } catch (PDOException $e) {
+            // Registrar el error para depuración
+            error_log("Error en verificación de disponibilidad: " . $e->getMessage());
+            error_log("Query fallida con fecha: $fecha, turno_id: $turno_id, zona: $zona");
+            $errores['sistema'] = 'Error al verificar disponibilidad. Por favor, inténtelo de nuevo.';
+        }
+    }
+    
+    // Si no hay errores, guardar los datos en la sesión y redirigir a la página de confirmación
+    if (empty($errores)) {
+        // Guardar datos de la reserva en la sesión
+        $_SESSION['fecha'] = $fecha;
+        $_SESSION['turno_id'] = $turno_id;
+        $_SESSION['zona'] = $zona;
+        $_SESSION['hora'] = $hora;
+        
+        // Obtener el nombre del turno para mostrarlo en la confirmación
+        $nombre_turno = '';
+        foreach ($turnos as $t) {
+            if ($t['id'] == $turno_id) {
+                $nombre_turno = $t['nombre'];
+                break;
+            }
+        }
+        $_SESSION['nombre_turno'] = $nombre_turno;
+        
+        // Redirigir a la página de confirmación
+        header('Location: confirmar_reserva.php');
+        exit;
+    }
+}
+
+// Generar un array con los días del mes de mayo 2025
+$dias_mayo = [];
+for ($i = 1; $i <= 31; $i++) {
+    $dias_mayo[] = sprintf('2025-05-%02d', $i);
+}
+
+// Crear un array para identificar qué días están disponibles
+$calendario_disponibilidad = [];
+foreach ($dias_mayo as $dia) {
+    $calendario_disponibilidad[$dia] = in_array($dia, $dias_disponibles);
+}
+
+// Convertir a JSON para usar en JavaScript
+$calendario_disponibilidad_json = json_encode($calendario_disponibilidad);
+?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selección de Fecha y Turno - Sistema de Reservas de Restaurantes</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Flatpickr (calendario) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+    <style>
+        .error-message {
+            color: #b91c1c;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        /* Estilos para los botones de selección */
+        .option-button {
+            transition: all 0.3s ease;
+        }
+        .option-button.selected {
+            background-color: #3b82f6;
+            color: white;
+            transform: scale(1.05);
+        }
+        /* Estilos para el calendario */
+        .flatpickr-day.selected {
+            background: #3b82f6 !important;
+            border-color: #3b82f6 !important;
+            color: white !important;
+        }
+        .flatpickr-day.today {
+            border-color: #3b82f6 !important;
+        }
+        .dia-disponible {
+            background-color: #10b981 !important;
+            color: white !important;
+            border-color: #10b981 !important;
+            font-weight: bold !important;
+        }
+        .flatpickr-day:not(.flatpickr-disabled):not(.prevMonthDay):not(.nextMonthDay).dia-disponible:hover {
+            background-color: #0d9488 !important;
+            border-color: #0d9488 !important;
+        }
+        /* Corregir el desplazamiento del círculo */
+        .flatpickr-day {
+            border-radius: 50% !important;
+            max-width: 40px !important;
+            height: 40px !important;
+            line-height: 40px !important;
+            margin: 2px auto !important;
+            text-align: center !important;
+            display: inline-block !important;
+            position: relative !important;
+        }
+        /* Eliminar el círculo azul del día 6 */
+        .flatpickr-day.today:not(.selected):not(.dia-disponible) {
+            border: none !important;
+            background: transparent !important;
+        }
+        /* Asegurar que los días seleccionados mantengan su estilo */
+        .flatpickr-day.selected.dia-disponible {
+            background: #3b82f6 !important;
+            border-color: #3b82f6 !important;
+        }
+        /* Asegurar que los días no disponibles no cambien de color */
+        .flatpickr-day.flatpickr-disabled {
+            background-color: transparent !important;
+            color: rgba(57, 57, 57, 0.3) !important;
+            cursor: not-allowed !important;
+        }
+        /* Corregir el problema de selección */
+        .flatpickr-day.nextMonthDay, .flatpickr-day.prevMonthDay {
+            visibility: hidden !important;
+        }
+        /* Animación para mostrar/ocultar secciones */
+        .section-transition {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out;
+            opacity: 0;
+        }
+        .section-transition.visible {
+            max-height: 500px;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="bg-blue-600 text-white rounded-lg shadow-lg p-6 mb-8">
+            <h1 class="text-3xl font-bold">Sistema de Reservas de Restaurantes</h1>
+            <p class="mt-2">Selecciona la fecha, turno y zona para tu reserva</p>
+        </header>
+
+        <main class="mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6">Detalles de la Reserva</h2>
+                
+                <?php if (isset($errores) && !empty($errores)): ?>
+                <div id="mensajeError" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6" role="alert">
+                    <p class="font-bold">Por favor, corrige los siguientes errores:</p>
+                    <ul class="list-disc pl-5" id="textoError">
+                        <?php foreach ($errores as $error): ?>
+                            <li><?php echo $error; ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+                <?php endif; ?>
+                
+                <div class="mb-4 p-4 bg-blue-50 rounded-lg">
+                    <h3 class="text-lg font-medium text-blue-800">Información de la reserva</h3>
+                    <p class="text-blue-600">
+                        <strong>Cliente:</strong> <?php echo htmlspecialchars($_SESSION['nombre']); ?><br>
+                        <strong>Número de personas:</strong> <?php echo htmlspecialchars($_SESSION['num_personas']); ?>
+                        <?php if ($_SESSION['num_personas'] > $max_personas_sin_aprobacion): ?>
+                            <span class="text-amber-600 font-medium">
+                                (Requiere confirmación por parte del restaurante)
+                            </span>
+                        <?php endif; ?>
+                    </p>
+                </div>
+                
+                <form method="POST" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" class="space-y-6">
+                    <!-- Selección de Fecha (Primero) -->
+                    <div class="form-group">
+                        <label for="fecha" class="block text-sm font-medium text-gray-700 mb-2">1. Selecciona la fecha *</label>
+                        <input type="text" id="fecha" name="fecha" 
+                               class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                               placeholder="Selecciona una fecha" readonly
+                               value="<?php echo isset($fecha) ? $fecha : ''; ?>">
+                    </div>
+                    
+                    <!-- Selección de Turno (Segundo - inicialmente oculto) -->
+                    <div class="form-group section-transition" id="turnoContainer">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">2. Selecciona el turno *</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="turnoOptions">
+                            <?php foreach ($turnos as $turno): ?>
+                            <button type="button" 
+                                    data-turno-id="<?php echo $turno['id']; ?>" 
+                                    data-turno="<?php echo $turno['nombre']; ?>" 
+                                    class="option-button turno-option bg-white border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50 p-4 rounded-lg text-center transition-all shadow-sm <?php echo (isset($turno_id) && $turno_id == $turno['id']) ? 'selected border-blue-500 bg-blue-500 text-white' : ''; ?>">
+                                <div class="flex items-center justify-center mb-2">
+                                    <?php if ($turno['nombre'] == 'mediodia'): ?>
+                                        <i class="fas fa-sun text-2xl <?php echo (isset($turno_id) && $turno_id == $turno['id']) ? 'text-white' : 'text-yellow-500'; ?>"></i>
+                                    <?php else: ?>
+                                        <i class="fas fa-moon text-2xl <?php echo (isset($turno_id) && $turno_id == $turno['id']) ? 'text-white' : 'text-indigo-500'; ?>"></i>
+                                    <?php endif; ?>
+                                </div>
+                                <span class="block text-lg font-medium">
+                                    <?php echo $turno['nombre'] == 'mediodia' ? 'Mediodía' : 'Noche'; ?>
+                                </span>
+                                <span class="block text-sm <?php echo (isset($turno_id) && $turno_id == $turno['id']) ? 'text-white' : 'text-gray-500'; ?>">
+                                    <?php echo $turno['hora_inicio'] . ' - ' . $turno['hora_fin']; ?>
+                                </span>
+                            </button>
+                            <?php endforeach; ?>
+                        </div>
+                        <input type="hidden" id="turno" name="turno" value="<?php echo isset($turno_id) ? $turno_id : ''; ?>">
+                    </div>
+                    
+                    <!-- Selección de Hora (Tercero - inicialmente oculto) -->
+                    <div class="form-group section-transition" id="horaContainer">
+                        <label for="hora" class="block text-sm font-medium text-gray-700 mb-2">3. Selecciona la hora *</label>
+                        <select id="hora" name="hora" 
+                                class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Selecciona una hora</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Selección de Zona (Cuarto - inicialmente oculto) -->
+                    <div class="form-group section-transition" id="zonaContainer">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">4. Selecciona la zona *</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="zonaOptions">
+                            <button type="button" 
+                                    data-zona="dentro" 
+                                    class="option-button zona-option bg-white border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50 p-4 rounded-lg text-center transition-all shadow-sm <?php echo (isset($zona) && $zona == 'dentro') ? 'selected border-blue-500 bg-blue-500 text-white' : ''; ?>">
+                                <div class="flex items-center justify-center mb-2">
+                                    <i class="fas fa-home text-2xl <?php echo (isset($zona) && $zona == 'dentro') ? 'text-white' : 'text-blue-500'; ?>"></i>
+                                </div>
+                                <span class="block text-lg font-medium">Interior</span>
+                                <span class="block text-sm <?php echo (isset($zona) && $zona == 'dentro') ? 'text-white' : 'text-gray-500'; ?>">Techado</span>
+                            </button>
+                            <button type="button" 
+                                    data-zona="fuera" 
+                                    class="option-button zona-option bg-white border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50 p-4 rounded-lg text-center transition-all shadow-sm <?php echo (isset($zona) && $zona == 'fuera') ? 'selected border-blue-500 bg-blue-500 text-white' : ''; ?>">
+                                <div class="flex items-center justify-center mb-2">
+                                    <i class="fas fa-umbrella-beach text-2xl <?php echo (isset($zona) && $zona == 'fuera') ? 'text-white' : 'text-green-500'; ?>"></i>
+                                </div>
+                                <span class="block text-lg font-medium">Terraza</span>
+                                <span class="block text-sm <?php echo (isset($zona) && $zona == 'fuera') ? 'text-white' : 'text-gray-500'; ?>">Al aire libre</span>
+                            </button>
+                        </div>
+                        <input type="hidden" id="zona" name="zona" value="<?php echo isset($zona) ? $zona : ''; ?>">
+                    </div>
+                    
+                    <div class="text-center">
+                        <button type="submit" id="confirmarBtn" 
+                                class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-lg transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed" 
+                                disabled>
+                            Continuar con la reserva
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </main>
+        
+        <footer class="text-center text-gray-500 text-sm">
+            <p>&copy; <?php echo date('Y'); ?> Sistema de Reservas de Restaurantes</p>
+        </footer>
+    </div>
+    
+    <!-- Script para el calendario y la selección de opciones -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Elementos del DOM
+        const turnoContainer = document.getElementById('turnoContainer');
+        const zonaContainer = document.getElementById('zonaContainer');
+        const horaContainer = document.getElementById('horaContainer');
+        const turnoButtons = document.querySelectorAll('.turno-option');
+        const zonaButtons = document.querySelectorAll('.zona-option');
+        const turnoInput = document.getElementById('turno');
+        const zonaInput = document.getElementById('zona');
+        const fechaInput = document.getElementById('fecha');
+        const horaSelect = document.getElementById('hora');
+        const confirmarBtn = document.getElementById('confirmarBtn');
+        
+        // Variables para almacenar selecciones
+        let turnoSeleccionado = '';
+        let zonaSeleccionada = '';
+        let fechaSeleccionada = '';
+        
+        // Días disponibles desde PHP
+        const diasDisponibles = <?php echo $dias_disponibles_json; ?>;
+        
+        // Calendario de disponibilidad
+        const calendarioDisponibilidad = <?php echo $calendario_disponibilidad_json; ?>;
+        
+        // Estado de ocupación de los días
+        let estadoOcupacion = {};
+        
+        console.log('Días disponibles:', diasDisponibles);
+        console.log('Calendario disponibilidad:', calendarioDisponibilidad);
+        
+        // Cargar información de ocupación
+        fetch('obtener_estado_ocupacion.php')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    estadoOcupacion = data.estado_ocupacion;
+                    console.log('Estado de ocupación:', estadoOcupacion);
+                    // Actualizar colores del calendario
+                    setTimeout(marcarDiasDisponibles, 100);
+                }
+            })
+            .catch(error => {
+                console.error('Error al obtener estado de ocupación:', error);
+            });
+        
+        // Horas disponibles por turno
+        const horasPorTurno = {
+            mediodia: ["13:00", "13:30", "14:00", "14:30", "15:00", "15:30"],
+            noche: ["20:00", "20:30", "21:00", "21:30", "22:00", "22:30"]
+        };
+        
+        // Inicializar Flatpickr
+        const flatpickrInstance = flatpickr(fechaInput, {
+            locale: "es",
+            dateFormat: "Y-m-d",
+            minDate: <?php echo $fecha_min_json; ?>,
+            maxDate: <?php echo $fecha_max_json; ?>,
+            inline: true,
+            enable: diasDisponibles,
+            monthSelectorType: 'dropdown',
+            yearSelectorType: 'dropdown',
+            mode: "single", // Asegurar que solo se seleccione un día
+            onChange: function(selectedDates, dateStr) {
+                if (selectedDates.length > 0) {
+                    fechaSeleccionada = dateStr;
+                    console.log('Fecha seleccionada:', fechaSeleccionada);
+                    
+                    // Mostrar la sección de turno
+                    turnoContainer.classList.add('visible');
+                    
+                    // Ocultar las secciones siguientes si se cambia la fecha
+                    zonaContainer.classList.remove('visible');
+                    horaContainer.classList.remove('visible');
+                    
+                    // Resetear selecciones
+                    turnoButtons.forEach(btn => btn.classList.remove('selected'));
+                    zonaButtons.forEach(btn => btn.classList.remove('selected'));
+                    turnoInput.value = '';
+                    zonaInput.value = '';
+                    horaSelect.value = '';
+                    
+                    // Volver a aplicar los estilos para asegurar que solo el día seleccionado esté marcado
+                    setTimeout(marcarDiasDisponibles, 10);
+                    
+                    validarFormulario();
+                }
+            },
+            onReady: function() {
+                setTimeout(marcarDiasDisponibles, 100);
+                // Eliminar el día de hoy si no es un día disponible
+                setTimeout(function() {
+                    const today = document.querySelector('.flatpickr-day.today');
+                    if (today && !diasDisponibles.includes(formatearFecha(new Date()))) {
+                        today.classList.remove('today');
+                    }
+                }, 200);
+            },
+            onMonthChange: function() {
+                setTimeout(marcarDiasDisponibles, 100);
+            },
+            onYearChange: function() {
+                setTimeout(marcarDiasDisponibles, 100);
+            },
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                const fechaStr = formatearFecha(dayElem.dateObj);
+                if (fechaStr && diasDisponibles.includes(fechaStr)) {
+                    dayElem.classList.add('dia-disponible');
+                }
+            }
+        });
+        
+        // Función para formatear una fecha como YYYY-MM-DD
+        function formatearFecha(fecha) {
+            if (!fecha) return null;
+            
+            const year = fecha.getFullYear();
+            const month = String(fecha.getMonth() + 1).padStart(2, '0');
+            const day = String(fecha.getDate()).padStart(2, '0');
+            
+            return `${year}-${month}-${day}`;
+        }
+        
+        // Función para marcar los días disponibles
+        function marcarDiasDisponibles() {
+            console.log('Marcando días disponibles...');
+            
+            // Obtener todos los elementos de día del calendario
+            const diasCalendario = document.querySelectorAll('.flatpickr-day');
+            
+            diasCalendario.forEach(dia => {
+                // Verificar si el día tiene un objeto de fecha asociado
+                if (dia.dateObj) {
+                    const fecha = formatearFecha(dia.dateObj);
+                    
+                    // Verificar si el día está disponible
+                    if (diasDisponibles.includes(fecha)) {
+                        dia.classList.add('dia-disponible');
+                        dia.classList.remove('flatpickr-disabled');
+                        
+                        // Aplicar colores según el estado de ocupación
+                        if (estadoOcupacion[fecha]) {
+                            const estado = estadoOcupacion[fecha].estado;
+                            
+                            if (estado === 'lleno') {
+                                dia.style.backgroundColor = '#fee2e2'; // Rojo claro
+                                dia.style.borderColor = '#ef4444';
+                                dia.style.color = '#7f1d1d';
+                            } else if (estado === 'medio_lleno') {
+                                dia.style.backgroundColor = '#fef3c7'; // Amarillo claro
+                                dia.style.borderColor = '#f59e0b';
+                                dia.style.color = '#78350f';
+                            } else {
+                                dia.style.backgroundColor = '#ecfdf5'; // Verde claro
+                                dia.style.borderColor = '#10b981';
+                                dia.style.color = '#064e3b';
+                            }
+                        } else {
+                            dia.style.backgroundColor = '#ecfdf5'; // Verde claro por defecto
+                            dia.style.borderColor = '#10b981';
+                            dia.style.color = '#064e3b';
+                        }
+                        
+                        // Si el día está seleccionado, asegurarse de que mantenga su estilo
+                        if (dia.classList.contains('selected')) {
+                            dia.style.backgroundColor = '#3b82f6';
+                            dia.style.borderColor = '#3b82f6';
+                            dia.style.color = 'white';
+                        }
+                    } else {
+                        dia.classList.remove('dia-disponible');
+                        dia.classList.add('flatpickr-disabled');
+                        dia.style.backgroundColor = 'transparent';
+                        dia.style.color = 'rgba(57, 57, 57, 0.3)';
+                    }
+                } else {
+                    // Si no tiene objeto de fecha, intentar obtener la fecha del texto
+                    const numeroDia = parseInt(dia.textContent.trim());
+                    
+                    if (!isNaN(numeroDia) && numeroDia >= 1 && numeroDia <= 31 && 
+                        !dia.classList.contains('prevMonthDay') && 
+                        !dia.classList.contains('nextMonthDay')) {
+                        
+                        // Obtener el mes y año actual del calendario
+                        const mesActual = document.querySelector('.flatpickr-current-month select').value;
+                        const anioActual = document.querySelector('.numInput.cur-year').value;
+                        
+                        // Formatear la fecha como YYYY-MM-DD
+                        const mes = String(parseInt(mesActual) + 1).padStart(2, '0');
+                        const dia = String(numeroDia).padStart(2, '0');
+                        const fechaStr = `${anioActual}-${mes}-${dia}`;
+                        
+                        // Verificar si el día está disponible
+                        if (diasDisponibles.includes(fechaStr)) {
+                            dia.classList.add('dia-disponible');
+                            dia.classList.remove('flatpickr-disabled');
+                        } else {
+                            dia.classList.remove('dia-disponible');
+                            dia.classList.add('flatpickr-disabled');
+                        }
+                    }
+                }
+            });
+            
+            // Asegurarse de que los días no disponibles no cambien de color
+            document.querySelectorAll('.flatpickr-day.flatpickr-disabled').forEach(dia => {
+                dia.style.backgroundColor = 'transparent';
+                dia.style.color = 'rgba(57, 57, 57, 0.3)';
+            });
+        }
+        
+        // Eventos para botones de turno
+        turnoButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Quitar selección de todos los botones
+                turnoButtons.forEach(btn => btn.classList.remove('selected'));
+                
+                // Marcar este botón como seleccionado
+                this.classList.add('selected');
+                
+                // Guardar el valor seleccionado
+                turnoSeleccionado = this.getAttribute('data-turno');
+                const turnoId = this.getAttribute('data-turno-id');
+                turnoInput.value = turnoId;
+                
+                console.log('Turno seleccionado:', turnoSeleccionado, 'ID:', turnoId);
+                
+                // Actualizar las horas disponibles según el turno seleccionado
+                actualizarHorasDisponibles();
+                
+                // Mostrar la sección de hora
+                horaContainer.classList.add('visible');
+                
+                // Ocultar la sección de zona si se cambia el turno
+                zonaContainer.classList.remove('visible');
+                
+                // Resetear selecciones de zona y hora
+                zonaButtons.forEach(btn => btn.classList.remove('selected'));
+                zonaInput.value = '';
+                horaSelect.value = '';
+                
+                validarFormulario();
+            });
+        });
+        
+        // Eventos para botones de zona
+        zonaButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const zona = this.getAttribute('data-zona');
+                const numPersonas = <?php echo $_SESSION['num_personas']; ?>;
+                const fecha = fechaInput.value;
+                const turnoId = turnoInput.value;
+                
+                // Obtener el nombre del turno
+                let turnoNombre = '';
+                turnoButtons.forEach(btn => {
+                    if (btn.classList.contains('selected')) {
+                        turnoNombre = btn.getAttribute('data-turno');
+                    }
+                });
+                
+                if (!fecha || !turnoNombre) {
+                    console.error('Falta fecha o turno');
+                    return;
+                }
+                
+                // Verificar disponibilidad de aforo antes de seleccionar la zona
+                const fechaFormateada = fecha.split('-').reverse().join('/');
+                fetch(`verificar_aforo.php?fecha=${fechaFormateada}&zona=${zona}&turno=${turnoNombre}&num_personas=${numPersonas}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Respuesta de verificación de aforo:', data);
+                        
+                        // Quitar mensajes de error previos
+                        const errorMsgContainer = document.getElementById('zonaErrorMsg');
+                        if (errorMsgContainer) {
+                            errorMsgContainer.remove();
+                        }
+                        
+                        if (data.disponible) {
+                            // Quitar selección de todos los botones
+                            zonaButtons.forEach(btn => btn.classList.remove('selected'));
+                            
+                            // Marcar este botón como seleccionado
+                            this.classList.add('selected');
+                            
+                            // Guardar el valor seleccionado
+                            zonaSeleccionada = zona;
+                            zonaInput.value = zonaSeleccionada;
+                            
+                            console.log('Zona seleccionada:', zonaSeleccionada);
+                            
+                            // Mostrar mensaje de disponibilidad
+                            const disponibleMsg = document.createElement('div');
+                            disponibleMsg.id = 'zonaDisponibleMsg';
+                            disponibleMsg.className = 'mt-2 text-green-600 text-sm font-medium';
+                            
+                            // Personalizar mensaje según la zona
+                            const zonaTexto = zona === 'dentro' ? 'interior' : 'terraza';
+                            disponibleMsg.textContent = `Hay sitio disponible en ${zonaTexto}`;
+                            
+                            // Quitar mensaje anterior si existe
+                            const prevMsg = document.getElementById('zonaDisponibleMsg');
+                            if (prevMsg) {
+                                prevMsg.remove();
+                            }
+                            
+                            // Añadir mensaje después del botón
+                            this.parentNode.parentNode.appendChild(disponibleMsg);
+                            
+                            // Mostrar la sección de hora sin reiniciar la selección
+                            horaContainer.classList.add('visible');
+                            
+                            // No llamamos a actualizarHorasDisponibles() aquí para evitar
+                            // que se reinicie la selección de hora
+                            
+                            validarFormulario();
+                        } else {
+                            // Crear mensaje de error
+                            const errorMsg = document.createElement('div');
+                            errorMsg.id = 'zonaErrorMsg';
+                            errorMsg.className = 'mt-2 text-red-600 text-sm font-medium';
+                            
+                            // Personalizar mensaje según la zona
+                            const zonaTexto = zona === 'dentro' ? 'interior' : 'terraza';
+                            errorMsg.textContent = `Capacidad insuficiente en ${zonaTexto}`;
+                            
+                            // Quitar mensaje anterior si existe
+                            const prevErrorMsg = document.getElementById('zonaErrorMsg');
+                            if (prevErrorMsg) {
+                                prevErrorMsg.remove();
+                            }
+                            
+                            // Quitar mensajes de disponibilidad previos
+                            const disponibleMsg = document.getElementById('zonaDisponibleMsg');
+                            if (disponibleMsg) {
+                                disponibleMsg.remove();
+                            }
+                            
+                            // Añadir mensaje después del botón
+                            this.parentNode.parentNode.appendChild(errorMsg);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error al verificar aforo:', error);
+                    });
+            });
+        });
+        
+        // Función para actualizar horas disponibles según el turno
+        function actualizarHorasDisponibles() {
+            let horas = [];
+            
+            if (turnoSeleccionado === 'mediodia') {
+                horas = horasPorTurno.mediodia;
+            } else if (turnoSeleccionado === 'noche') {
+                horas = horasPorTurno.noche;
+            }
+            
+            // Limpiar opciones actuales
+            horaSelect.innerHTML = '';
+            
+            // Añadir opción por defecto
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Selecciona una hora';
+            horaSelect.appendChild(defaultOption);
+            
+            // Añadir nuevas opciones
+            horas.forEach(hora => {
+                const option = document.createElement('option');
+                option.value = hora;
+                option.textContent = hora;
+                horaSelect.appendChild(option);
+            });
+        }
+        
+        // Evento para cambio en selector de hora
+        horaSelect.addEventListener('change', function() {
+            // Mostrar la sección de zona cuando se selecciona una hora
+            if (this.value) {
+                zonaContainer.classList.add('visible');
+            } else {
+                zonaContainer.classList.remove('visible');
+            }
+            
+            validarFormulario();
+        });
+        
+        // Función para validar el formulario
+        function validarFormulario() {
+            const formularioValido = 
+                turnoInput.value !== '' && 
+                zonaInput.value !== '' && 
+                fechaInput.value !== '' && 
+                horaSelect.value !== '';
+            
+            confirmarBtn.disabled = !formularioValido;
+        }
+        
+        // Marcar los días disponibles al cargar la página
+        marcarDiasDisponibles();
+        
+        // Volver a marcar los días disponibles después de un tiempo para asegurar que se apliquen los estilos
+        setTimeout(marcarDiasDisponibles, 500);
+        setTimeout(marcarDiasDisponibles, 1000);
+    });
+    </script>
+</body>
+</html>

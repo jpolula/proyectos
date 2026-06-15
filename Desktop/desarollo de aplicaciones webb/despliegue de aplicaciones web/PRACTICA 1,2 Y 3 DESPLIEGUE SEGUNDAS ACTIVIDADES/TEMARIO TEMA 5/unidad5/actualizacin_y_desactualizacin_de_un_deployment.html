@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="es">
+<head>
+<link rel="stylesheet" type="text/css" href="base.css" />
+<link rel="stylesheet" type="text/css" href="content.css" />
+<link rel="stylesheet" type="text/css" href="nav.css" />
+<meta http-equiv="content-type" content="text/html;  charset=utf-8" />
+<title>Actualización y desactualización de un Deployment | MODULO 5 </title>
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+<meta name="author" content="JAVI" />
+<link rel="license" type="text/html" href="http://creativecommons.org/licenses/by-sa/4.0/" />
+<meta name="generator" content="eXeLearning 2.8.1 - exelearning.net" />
+<!--[if lt IE 9]><script type="text/javascript" src="exe_html5.js"></script><![endif]-->
+<script type="text/javascript" src="exe_jquery.js"></script>
+<script type="text/javascript" src="common_i18n.js"></script>
+<script type="text/javascript" src="common.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body class="exe-web-site" id="exe-node-5"><script type="text/javascript">document.body.className+=" js"</script>
+<div id="content">
+<p id="skipNav"><a href="#main" class="sr-av">Saltar la navegación</a></p>
+<header id="header" ><div id="headerContent">MODULO 5</div></header>
+<nav id="siteNav">
+<ul>
+   <li><a href="index.html" class="daddy main-node">Despliegues: Deployments</a></li>
+   <li><a href="describiendo_un_deployment.html" class="no-ch">Describiendo un Deployment</a></li>
+   <li><a href="gestin_bsica_de_un_deployment.html" class="no-ch">Gestión básica de un Deployment</a></li>
+   <li id="active"><a href="actualizacin_y_desactualizacin_de_un_deployment.html" class="active no-ch">Actualización y desactualización de un Deployment</a></li>
+   <li><a href="crditos.html" class="no-ch">Créditos</a></li>
+</ul>
+</nav>
+<div id='topPagination'>
+<nav class="pagination noprt">
+<a href="gestin_bsica_de_un_deployment.html" class="prev"><span><span>&laquo; </span>Anterior</span></a> <span class="sep">| </span><a href="crditos.html" class="next"><span>Siguiente<span> &raquo;</span></span></a>
+</nav>
+</div>
+<div id="main-wrapper">
+<section id="main">
+<header id="nodeDecoration"><h1 id="nodeTitle">Actualización y desactualización de un Deployment</h1></header>
+<article class="iDevice_wrapper textIdevice em_iDevice em_iDevice_conocer" id="id6">
+<div class="iDevice emphasis1" >
+<header class="iDevice_header"><h1 class="iDeviceTitle">Ciclo de vida del desarrollo de aplicaciones...</h1></header>
+<div class="iDevice_inner">
+<div class="iDevice_content_wrapper">
+<div id="ta6_129_2" class="block iDevice_content">
+<div class="exe-text"><p>El ciclo de vida del desarrollo de aplicaciones cuando trabajamos con contenedores nos facilita la labor de versionar nuestros desarrollos. Por cada nueva versión que se desarrolla de nuestra aplicación podemos crear una nueva imagen del contenedor que podemos versionar utilizando la etiqueta del nombre de la imagen.</p>
+<p>Por lo tanto, al crear un Deployment indicaremos la imagen desde la que se van a crear los Pods. Al indicar la imagen podremos indicar la etiqueta que nos indica la versión de la aplicación que vamos a implantar.</p>
+<p>Una vez que hemos creado un Deployment a partir de una imagen de una versión determinada, tenemos los Pods ejecutando la versión indicada de la aplicación.</p>
+<p>¿Cómo podemos actualizar a una nueva versión de la aplicación?. Se seguirán los siguientes pasos:</p>
+<ol>
+<li>Tendremos que modificar el valor del parámetro <code>image</code> para indicar una nueva imagen, especificando la nueva versión mediante el cambio de etiqueta.</li>
+<li>En ese momento el Deployment se actualiza, es decir, crea un nuevo ReplicaSet que creará nuevos Pods de la nueva versión de la aplicación.</li>
+<li>Según la estrategia de despliegue indicada, se irán borrando los antiguos Pods y se crearán lo nuevos.</li>
+<li>El Deployment guardará el ReplicaSet antiguo, por si en algún momento queremos volver a la versión anterior.</li>
+</ol></div>
+</div>
+</div>
+</div>
+</div>
+</article>
+<article class="iDevice_wrapper textIdevice" id="id3">
+<div class="iDevice emphasis0" >
+<div id="ta3_127_2" class="block iDevice_content">
+<div class="exe-text"><p>Veamos este proceso con más detalles estudiando un ejemplo de despliegue:</p>
+<h2>Desplegando la aplicación mediawiki</h2>
+<p>Vamos a partir del fichero <code>mediawiki-deployment.yaml</code> <a href="mediawiki-deployment.1.yaml"></a>para desplegar la aplicación:</p>
+<div class="snippet-clipboard-content position-relative">
+<div class="highlight highlight-source-yaml notranslate position-relative overflow-auto" dir="auto">
+<pre><span class="pl-ent">apiVersion</span>: <span class="pl-s">apps/v1</span>
+<span class="pl-ent">kind</span>: <span class="pl-s">Deployment</span>
+<span class="pl-ent">metadata</span>:
+  <span class="pl-ent">name</span>: <span class="pl-s">mediawiki</span>
+  <span class="pl-ent">labels</span>:
+    <span class="pl-ent">app</span>: <span class="pl-s">mediawiki</span>
+<span class="pl-ent">spec</span>:
+  <span class="pl-ent">replicas</span>: <span class="pl-c1">1</span>
+  <span class="pl-ent">selector</span>:
+    <span class="pl-ent">matchLabels</span>:
+      <span class="pl-ent">app</span>: <span class="pl-s">mediawiki</span>
+  <span class="pl-ent">template</span>:
+    <span class="pl-ent">metadata</span>:
+      <span class="pl-ent">labels</span>:
+        <span class="pl-ent">app</span>: <span class="pl-s">mediawiki</span>
+    <span class="pl-ent">spec</span>:
+      <span class="pl-ent">containers</span>:
+      - <span class="pl-ent">name</span>: <span class="pl-s">contenedor-mediawiki</span>
+        <span class="pl-ent">image</span>: <span class="pl-s">mediawiki:1.38.5</span>
+        <span class="pl-ent">ports</span>:
+        - <span class="pl-ent">containerPort</span>: <span class="pl-c1">80</span></pre>
+</div>
+<p dir="auto">Si nos fijamos vamos a desplegar la versión 1.38.5 de la aplicación mediawiki. Creamos el despliegue con la siguiente instrucción:</p>
+<div class="snippet-clipboard-content notranslate position-relative overflow-auto">
+<pre class="notranslate"><code>kubectl apply -f mediawiki-deployment.yaml
+</code></pre>
+</div>
+<p dir="auto">A continuación podemos "anotar" en el despliegue la causa del nuevo despliegue, de esta forma al visualizar el historial de modificaciones veremos las causas que han provocado cada actualización. Para ello:</p>
+<div class="snippet-clipboard-content notranslate position-relative overflow-auto">
+<pre class="notranslate"><code>kubectl annotate deployment/mediawiki kubernetes.io/change-cause="Primer despliegue. Desplegamos versión 1.38.5"
+</code></pre>
+</div>
+<p dir="auto">Podemos comprobar los recursos que hemos creado:</p>
+<div class="snippet-clipboard-content notranslate position-relative overflow-auto">
+<pre class="notranslate"><code>kubectl get all
+</code></pre>
+</div>
+<p dir="auto">Y si accedemos al Pod con un <code>port-forward</code> comprobamos que la versión actual de la mediawiki es la 1.38.5:</p>
+<div class="snippet-clipboard-content notranslate position-relative overflow-auto">
+<pre class="notranslate"><code>kubectl port-forward deployment/mediawiki 8080:80
+</code></pre>
+</div>
+<p dir="auto"><a target="_blank" rel="noopener noreferrer" href="https://github.com/iesgn/curso_kubernetes_cep/blob/main/modulo5/img/mediawiki1.png"><img src="https://github.com/iesgn/curso_kubernetes_cep/raw/main/modulo5/img/mediawiki1.png" alt="mediawiki" style="max-width: 100%;" /></a></p>
+<h2 dir="auto"><a id="user-content-actualizar-un-deployment" class="anchor" aria-hidden="true" href="https://github.com/iesgn/curso_kubernetes_cep/blob/main/modulo5/actualizacion_deployment.md#actualizar-un-deployment"><svg class="octicon octicon-link" viewbox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"></svg></a></h2>
+<h2 dir="auto">Actualizar un Deployment</h2>
+<p dir="auto">A continuación queremos desplegar una versión más reciente de la mediawiki. Para ello tenemos que modificar el campo <code>image</code> de nuestro Deployment, esta operación la podemos hacer de varias formas:</p>
+<ol dir="auto">
+<li>
+<p dir="auto">Modificando el fichero yaml y volviendo a ejecutar un <code>kubectl apply</code>.</p>
+</li>
+<li>
+<p dir="auto">Ejecutando la siguiente instrucción:</p>
+<div class="snippet-clipboard-content notranslate position-relative overflow-auto">
+<pre class="notranslate"><code> kubectl set image deployment/mediawiki contenedor-mediawiki=mediawiki:1.39.1
+</code></pre>
+</div>
+</li>
+</ol>
+<p dir="auto">Al ejecutar la actualización del Deployment podemos observar que se ha creado un nuevo ReplicaSet, que creará los nuevos Pods a partir de la versión modificada de la imagen. ¿Cómo se crean los nuevos Pods y se destruyen los antiguos? Dependerá de la estrategia de despliegue:</p>
+<ul dir="auto">
+<li>Por defecto la estrategia de despliegue es <code>Recreate</code> que elimina los Pods antiguos y crea los nuevos.</li>
+<li>Si indicamos en el despliegue el tipo de estrategia <code>RollingUpdate</code>, se van creando los nuevos Pods, se comprueba que funcionan y se eliminan los antiguos.</li>
+</ul>
+<p dir="auto">A continuación indicamos el motivo del cambio del despliegue con una anotación:</p>
+<div class="snippet-clipboard-content notranslate position-relative overflow-auto">
+<pre class="notranslate"><code>kubectl annotate deployment/mediawiki kubernetes.io/change-cause="Segundo despliegue. Actualizamos a la versión 1.39.1"
+</code></pre>
+</div>
+<p dir="auto">Veamos los recursos que se han creado en la actualización:</p>
+<div class="snippet-clipboard-content notranslate position-relative overflow-auto">
+<pre class="notranslate"><code>kubectl get all
+</code></pre>
+</div>
+<p dir="auto">Kubernetes utiliza el término <em>rollout</em> para la gestión de diferentes versiones de despliegues. Podemos ver el historial de actualizaciones que hemos hecho sobre el despliegue:</p>
+<div class="snippet-clipboard-content notranslate position-relative overflow-auto">
+<pre class="notranslate"><code>kubectl rollout history deployment/mediawiki
+</code></pre>
+</div>
+<p dir="auto">Y nos aparecen las anotaciones que hemos hecho de cada despliegue:</p>
+<div class="snippet-clipboard-content notranslate position-relative overflow-auto">
+<pre class="notranslate"><code>deployment.apps/mediawiki 
+REVISION  CHANGE-CAUSE
+1         Primer despliegue. Desplegamos versión 1.38.5
+2         Segundo despliegue. Actualizamos a la versión 1.39.1
+</code></pre>
+</div>
+<p dir="auto">Y volvemos a acceder a la aplicación con un <code>port-forward</code> para comprobar que realmente se ha desplegado la versión 1.39.1.</p>
+<p dir="auto"><a target="_blank" rel="noopener noreferrer" href="https://github.com/iesgn/curso_kubernetes_cep/blob/main/modulo5/img/mediawiki2.png"><img src="https://github.com/iesgn/curso_kubernetes_cep/raw/main/modulo5/img/mediawiki2.png" alt="mediawiki" style="max-width: 100%;" /></a></p>
+<h2 dir="auto"><a id="user-content-rollback-del-deployment" class="anchor" aria-hidden="true" href="https://github.com/iesgn/curso_kubernetes_cep/blob/main/modulo5/actualizacion_deployment.md#rollback-del-deployment"><svg class="octicon octicon-link" viewbox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"></svg></a></h2>
+<h2 dir="auto"><em>Rollback</em> del Deployment</h2>
+<p dir="auto">El proceso de despliegue de una nueva versión de una aplicación es una labor crítica, que tradicionalmente ha dado muchos problemas. Si estamos sirviendo una aplicación web que utilizan muchos usuarios, no nos podemos permitir que haya un corte en el servicio por un problema en el despliegue de una nueva versión.</p>
+<p dir="auto">Evidentemente, los problemas que pueden aparecer durante el despliegue de una nueva versión pueden estar causados por muchos motivos, y muchas veces es complicado tener todos los factores controlados. Si finalmente tenemos alguno, la pregunta sería: ¿Hemos diseñado un proceso que nos permita de una manera sencilla y rápida volver a la versión anterior de la aplicación que sabíamos que funcionaba bien?</p>
+<p dir="auto">A ese proceso de volver a una versión anterior de la aplicación es lo que llamamos <strong>rollback</strong>, o de forma concreta en k8s, "deshacer" un <strong>rollout</strong>. Veremos en este ejemplo que Kubernetes nos ofrece un mecanismo sencillo de volver a versiones anteriores. Como hemos comentado, las actualizaciones de los Deployment van creando nuevos ReplicaSet, y se va guardando el historial de ReplicaSet anteriores. Deshacer un Rollout será tan sencillo como activar uno de los ReplicaSet antiguos.</p>
+<p dir="auto">Ahora vamos a desplegar una versión que nos da un error (la versión 2 de la aplicación no existe, no existe la imagen <code>mediawiki:2</code>). ¿Podremos volver al despliegue anterior?</p>
+<div class="snippet-clipboard-content notranslate position-relative overflow-auto">
+<pre class="notranslate"><code>kubectl set image deployment mediawiki contenedor-mediawiki=mediawiki:2
+</code></pre>
+</div>
+<p dir="auto">Y realizamos la anotación:</p>
+<div class="snippet-clipboard-content notranslate position-relative overflow-auto">
+<pre class="notranslate"><code>kubectl annotate deployment/mediawiki kubernetes.io/change-cause="Tercer despliegue. Actualizamos a la versión 2"
+</code></pre>
+</div>
+<p dir="auto">Comprobamos el historial de despliegues:</p>
+<div class="snippet-clipboard-content notranslate position-relative overflow-auto">
+<pre class="notranslate"><code>kubectl rollout history deployment/mediawiki
+deployment.apps/mediawiki 
+REVISION  CHANGE-CAUSE
+1         Primer despliegue. Desplegamos versión 1.38.5
+2         Segundo despliegue. Actualizamos a la versión 1.39.1
+3         Tercer despliegue. Actualizamos a la versión 2
+</code></pre>
+</div>
+<p dir="auto">Dependiendo de la estrategia de despliegue, esto puede provocar que la aplicación se quede en la versión anterior (<code>RollingUpdate</code>) o que no haya ningún Pod válido desplegado (<code>Recreate</code>). En cualquier caso, se puede volver a la versión anterior del despliegue mediante rollout:</p>
+<div class="snippet-clipboard-content notranslate position-relative overflow-auto">
+<pre class="notranslate"><code>kubectl rollout undo deployment/mediawiki
+kubectl get all
+</code></pre>
+</div>
+<p dir="auto">Y terminamos comprobando el historial de actualizaciones:</p>
+<div class="snippet-clipboard-content notranslate position-relative overflow-auto">
+<pre class="notranslate"><code>kubectl rollout history deployment mediawiki
+deployment.apps/mediawiki
+REVISION  CHANGE-CAUSE
+1         Primer despliegue. Desplegamos versión 1.38.5
+3         Tercer despliegue. Actualizamos a la versión 2
+4         Segundo despliegue. Actualizamos a la versión 1.39.1
+</code></pre>
+</div>
+</div></div>
+</div>
+</div>
+</article>
+<article class="iDevice_wrapper textIdevice em_iDevice em_iDevice_conocer" id="id13">
+<div class="iDevice emphasis1" >
+<header class="iDevice_header"><h1 class="iDeviceTitle">Diferencias con el vídeo de esta unidad</h1></header>
+<div class="iDevice_inner">
+<div class="iDevice_content_wrapper">
+<div id="ta13_130_2" class="block iDevice_content">
+<div class="exe-text"><p>El contenido de esta unidad difiere un poco con lo mostrado en el siguiente vídeo. Actualmente se prefiere el uso de anotaciones para ir guardando en el Deployment las causas que han producido la actualización del despliegue. Aunque lo mostrado en el vídeo sigue funcionando, es recomendable hacer el proceso de actualización del despliegue usando anotaciones.</p></div>
+</div>
+</div>
+</div>
+</div>
+</article>
+<article class="iDevice_wrapper textIdevice em_iDevice em_iDevice_reproduccion" id="id9">
+<div class="iDevice emphasis1" >
+<header class="iDevice_header"><h1 class="iDeviceTitle">Vídeo: Actualización y desactualización de un Deployment</h1></header>
+<div class="iDevice_inner">
+<div class="iDevice_content_wrapper">
+<div id="ta9_129_2" class="block iDevice_content">
+<div class="exe-text"><figure class="exe-figure exe-media position-center" style="width: 800px;"><iframe width="800" height="449" src="https://www.youtube.com/embed/6LjTwopWDFw" allowfullscreen="allowfullscreen" data-mce-fragment="1"></iframe>
+<figcaption class="figcaption"><span class="title"><em>Vídeo: Actualización y desactualización de un Deployment</em></span></figcaption>
+</figure>
+<p></p></div>
+</div>
+</div>
+</div>
+</div>
+</article>
+<div id="packageLicense" class="cc cc-by-sa">
+<p><span>Obra publicada con</span> <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Licencia Creative Commons Reconocimiento Compartir igual 4.0</a></p>
+</div>
+</section>
+</div>
+<div id='bottomPagination'>
+<nav class="pagination noprt">
+<a href="gestin_bsica_de_un_deployment.html" class="prev"><span><span>&laquo; </span>Anterior</span></a> <span class="sep">| </span><a href="crditos.html" class="next"><span>Siguiente<span> &raquo;</span></span></a>
+</nav>
+</div>
+</div>
+<p id="made-with-eXe"><a href="https://exelearning.net/" target="_blank" rel="noopener"><span>Creado con eXeLearning<span> (Ventana nueva)</span></span></a></p><script type="text/javascript" src="_intef_js.js"></script></body></html>

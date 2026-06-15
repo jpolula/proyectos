@@ -1,0 +1,20 @@
+// Asignar datos de configuración al ticket antes de guardarlo
+ticket.setFraseDelDia(config.getFraseDelDia());
+ticket.setCondicionesEntrada(config.getCondicionesEntrada());
+ticket.setCondicionesConsumicion(config.getCondicionesConsumicion());
+
+// Asignar icono desde la configuración
+String rutaIcono = config.getRutaIcono();
+if (rutaIcono != null && !rutaIcono.isEmpty()) {
+    ticket.setIcono(rutaIcono);
+    System.out.println("Icono asignado al ticket: " + rutaIcono);
+} else {
+    // Si no hay icono configurado, intentar usar el logo como alternativa
+    String rutaLogo = config.getRutaLogo();
+    if (rutaLogo != null && !rutaLogo.isEmpty()) {
+        ticket.setIcono(rutaLogo);
+        System.out.println("No hay icono configurado, usando logo como alternativa: " + rutaLogo);
+    } else {
+        System.out.println("No hay icono ni logo configurado en la configuración");
+    }
+}

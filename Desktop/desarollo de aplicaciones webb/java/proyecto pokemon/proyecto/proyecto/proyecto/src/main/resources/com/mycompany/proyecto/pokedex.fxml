@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.text.Font?>
+
+<Pane prefHeight="416.0" prefWidth="847.0" style="-fx-background-color: grey;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.proyecto.Pokedex">
+   <padding>
+      <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+   </padding>
+   <children>
+      <ImageView fx:id="imgPokemon" fitHeight="272.0" fitWidth="320.0" layoutX="241.0" layoutY="56.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@../../../../../../imagenes/bulbasaur.jpg" />
+         </image>
+      </ImageView>
+      <TextArea fx:id="infoPokemon" editable="false" layoutX="549.0" layoutY="56.0" prefHeight="272.0" prefWidth="253.0" />
+      <Label layoutX="358.0" style="-fx-background-color: black;" text="POKEDEX " textFill="WHITE">
+         <font>
+            <Font size="24.0" />
+         </font>
+      </Label>
+      <Button fx:id="btnVolverMenu" layoutX="377.0" layoutY="372.0" mnemonicParsing="false" onAction="#volverMenu" style="-fx-background-color: black; -fx-background-radius: 15;" text="VOLVER" textFill="WHITE">
+         <font>
+            <Font size="14.0" />
+         </font>
+      </Button>
+      <ListView fx:id="listPokemon" layoutX="24.0" layoutY="56.0" onMouseClicked="#updateInfo" prefHeight="272.0" prefWidth="200.0" />
+   </children>
+</Pane>

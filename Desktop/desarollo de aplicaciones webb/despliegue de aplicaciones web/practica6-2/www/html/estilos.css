@@ -1,0 +1,63 @@
+*{
+    background-color: rgb(201, 208, 208);
+    
+}
+
+table {
+    border-collapse: collapse
+ }
+ td, th {
+    background: rgb(211, 219, 222);
+    color: #000;
+ }
+
+th{
+    background-color: rgb(124, 138, 145);
+}
+.ultimaFila{
+    background-color: rgb(201, 208, 208);
+}
+
+.botonAnadir{
+    padding: 5px;
+    margin: 5px;
+    border: 1px solid black;
+    border-radius: 10px;
+    text-decoration: none;
+    color: black !important;
+    background-color: rgb(166, 178, 184);
+}
+.botonAnadir:hover{
+    background-color: rgb(90, 105, 111);
+    border: rgb(124, 138, 145);
+    font-weight: bold;
+}
+.botonEnviar{
+    padding: 5px;
+    margin: 5px;
+    border: 1px solid black;
+    border-radius: 10px;
+    text-decoration: none;
+    color: black !important;
+    background-color: rgb(166, 178, 184);
+}
+.botonEnviar:hover{
+    background-color: rgb(90, 105, 111);
+    border: rgb(124, 138, 145);
+    font-weight: bold;
+}
+
+.contenedorGlobal{
+    display: flex;
+    align-items: center; 
+    justify-content: center; 
+    
+}
+
+.iconos{
+    /* border: 1px solid black; */
+    color:black !important;
+}
+.iconos:hover{
+    border: rgb(86, 124, 143);
+}

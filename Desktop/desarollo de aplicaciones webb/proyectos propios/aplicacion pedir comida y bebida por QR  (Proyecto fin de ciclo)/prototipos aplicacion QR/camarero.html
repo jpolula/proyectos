@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Camarero</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f2f5; }
+        .header { background: #e67e22; color: white; padding: 1rem; text-align: center; }
+        .container { padding: 1rem; }
+        .panel { background: white; padding: 1rem; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .mesas-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+        .mesa { padding: 1rem; border-radius: 5px; text-align: center; cursor: pointer; }
+        .mesa-libre { background: #2ecc71; color: white; }
+        .mesa-ocupada { background: #e74c3c; color: white; }
+        .mesa-pendiente { background: #f1c40f; color: white; }
+        .pedidos-mesa { margin-top: 1rem; }
+        .pedido-detalle { background: #f8f9fa; padding: 1rem; margin-bottom: 0.5rem; border-radius: 5px; }
+        .pedido-hora { color: #666; font-size: 0.9em; }
+        .pedido-items { margin: 0.5rem 0; }
+        .item-pedido { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            background: #fff;
+            border-radius: 4px;
+        }
+        .item-info {
+            flex-grow: 1;
+            margin-right: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .pedido-estado { 
+            display: inline-block; 
+            padding: 0.25rem 0.5rem; 
+            border-radius: 3px; 
+            font-size: 0.9em;
+        }
+        .btn-entregar {
+            background: #2ecc71;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            display: none;
+        }
+        .btn-entregar:hover {
+            background: #27ae60;
+            transform: translateY(-1px);
+        }
+        /* Mostrar el botón solo cuando el estado es 'Listo' */
+        .item-pedido:has(.estado-listo) .btn-entregar {
+            display: inline-block;
+        }
+        .estado-pendiente { background: #fff3cd; color: #856404; }
+        .estado-preparando { background: #cce5ff; color: #004085; }
+        .estado-listo { background: #d4edda; color: #155724; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal-content { 
+            background: white; 
+            margin: 10% auto; 
+            padding: 2rem; 
+            width: 80%; 
+            max-width: 500px; 
+            border-radius: 10px; 
+        }
+        .close { float: right; font-size: 1.5rem; cursor: pointer; }
+        .cuenta { background: white; padding: 1rem; border-radius: 5px; }
+        .cuenta-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .cuenta-total { font-size: 1.5em; color: #2c3e50; font-weight: bold; }
+        .cuenta-item { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #eee; }
+        .btn-cobrar { 
+            background: #2ecc71; 
+            color: white; 
+            border: none; 
+            padding: 1rem 2rem; 
+            border-radius: 5px; 
+            width: 100%; 
+            margin-top: 1rem; 
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn-cobrar:hover {
+            background: #27ae60;
+        }
+        .opciones-pago {
+            display: none;
+            margin-top: 1rem;
+        }
+        .opciones-pago.visible {
+            display: block;
+        }
+        .metodo-pago {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border: 2px solid #e8e8e8;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .metodo-pago:hover {
+            border-color: #2ecc71;
+            background: #f8fff9;
+        }
+        .metodo-pago.seleccionado {
+            border-color: #2ecc71;
+            background: #f8fff9;
+        }
+        .metodo-pago img {
+            width: 40px;
+            height: 40px;
+            margin-right: 1rem;
+        }
+        .metodo-pago-info {
+            flex-grow: 1;
+        }
+        .metodo-pago-titulo {
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+        .metodo-pago-descripcion {
+            font-size: 0.9em;
+            color: #666;
+        }
+        .btn-procesar-pago {
+            background: #2ecc71;
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 5px;
+            width: 100%;
+            margin-top: 1rem;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: none;
+        }
+        .btn-procesar-pago.visible {
+            display: block;
+        }
+        .btn-procesar-pago:hover {
+            background: #27ae60;
+        }
+        .volver-opciones {
+            color: #666;
+            text-decoration: underline;
+            cursor: pointer;
+            display: none;
+            margin-top: 1rem;
+        }
+        .volver-opciones.visible {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Panel de Camarero</h1>
+    </div>
+
+    <div class="container">
+        <div class="panel">
+            <h2>Mesas</h2>
+            <div class="mesas-grid">
+                <div class="mesa mesa-ocupada" onclick="mostrarDetallesMesa(1)">Mesa 1</div>
+                <div class="mesa mesa-ocupada" onclick="mostrarDetallesMesa(2)">Mesa 2</div>
+                <div class="mesa mesa-pendiente" onclick="mostrarDetallesMesa(3)">Mesa 3</div>
+                <div class="mesa mesa-libre" onclick="mostrarDetallesMesa(4)">Mesa 4</div>
+            </div>
+
+            <div class="pedidos-mesa">
+                <h3>Pedidos Activos</h3>
+                <div class="pedido-detalle">
+                    <div class="pedido-hora">12:30 - Mesa 2 - Pedido #45</div>
+                    <div class="pedido-items">
+                        <div class="item-pedido">
+                            <div class="item-info">
+                                <span>2x Paella Valenciana</span>
+                                <span class="pedido-estado estado-preparando">Preparando</span>
+                            </div>
+                        </div>
+                        <div class="item-pedido">
+                            <div class="item-info">
+                                <span>3x Cerveza</span>
+                                <span class="pedido-estado estado-listo">Listo</span>
+                            </div>
+                            <button class="btn-entregar" onclick="entregarItem(45, 'Cerveza')">Entregar</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="pedido-detalle">
+                    <div class="pedido-hora">12:45 - Mesa 2 - Pedido #46</div>
+                    <div class="pedido-items">
+                        <div class="item-pedido">
+                            <div class="item-info">
+                                <span>2x Postre del día</span>
+                                <span class="pedido-estado estado-pendiente">Pendiente</span>
+                            </div>
+                        </div>
+                        <div class="item-pedido">
+                            <div class="item-info">
+                                <span>2x Café</span>
+                                <span class="pedido-estado estado-pendiente">Pendiente</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="pedido-detalle">
+                    <div class="pedido-hora">12:50 - Mesa 3 - Pedido #47</div>
+                    <div class="pedido-items">
+                        <div class="item-pedido">
+                            <div class="item-info">
+                                <span>1x Sopa del día</span>
+                                <span class="pedido-estado estado-preparando">Preparando</span>
+                            </div>
+                        </div>
+                        <div class="item-pedido">
+                            <div class="item-info">
+                                <span>1x Ensalada César</span>
+                                <span class="pedido-estado estado-listo">Listo</span>
+                            </div>
+                            <button class="btn-entregar" onclick="entregarItem(47, 'Ensalada César')">Entregar</button>
+                        </div>
+                        <div class="item-pedido">
+                            <div class="item-info">
+                                <span>2x Agua mineral</span>
+                                <span class="pedido-estado estado-listo">Listo</span>
+                            </div>
+                            <button class="btn-entregar" onclick="entregarItem(47, 'Agua mineral')">Entregar</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="pedido-detalle">
+                    <div class="pedido-hora">12:55 - Mesa 1 - Pedido #48</div>
+                    <div class="pedido-items">
+                        <div class="item-pedido">
+                            <div class="item-info">
+                                <span>4x Cerveza</span>
+                                <span class="pedido-estado estado-pendiente">Pendiente</span>
+                            </div>
+                        </div>
+                        <div class="item-pedido">
+                            <div class="item-info">
+                                <span>2x Nachos con guacamole</span>
+                                <span class="pedido-estado estado-pendiente">Pendiente</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 2rem;">Pedidos Completados</h3>
+                <div class="pedido-detalle" style="opacity: 0.7;">
+                    <div class="pedido-hora">12:15 - Mesa 3 - Pedido #43</div>
+                    <div class="pedido-items">
+                        <div class="item-pedido">
+                            <div class="item-info">
+                                <span>2x Hamburguesa</span>
+                                <span class="pedido-estado estado-listo">Entregado</span>
+                            </div>
+                        </div>
+                        <div class="item-pedido">
+                            <div class="item-info">
+                                <span>2x Refresco</span>
+                                <span class="pedido-estado estado-listo">Entregado</span>
+                            </div>
+                        </div>
+                        <div class="item-pedido">
+                            <div class="item-info">
+                                <span>1x Patatas fritas</span>
+                                <span class="pedido-estado estado-listo">Entregado</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="pedido-detalle" style="opacity: 0.7;">
+                    <div class="pedido-hora">12:20 - Mesa 4 - Pedido #44</div>
+                    <div class="pedido-items">
+                        <div class="item-pedido">
+                            <div class="item-info">
+                                <span>1x Pizza Margherita</span>
+                                <span class="pedido-estado estado-listo">Entregado</span>
+                            </div>
+                        </div>
+                        <div class="item-pedido">
+                            <div class="item-info">
+                                <span>1x Vino tinto</span>
+                                <span class="pedido-estado estado-listo">Entregado</span>
+                            </div>
+                        </div>
+                        <div class="item-pedido">
+                            <div class="item-info">
+                                <span>1x Tiramisú</span>
+                                <span class="pedido-estado estado-listo">Entregado</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para la cuenta -->
+    <div id="modalCuenta" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="cerrarModal()">&times;</span>
+            <div class="cuenta">
+                <div class="cuenta-header">
+                    <h3>Cuenta Mesa <span id="numeroMesaModal"></span></h3>
+                    <span class="cuenta-total">Total: 85.50€</span>
+                </div>
+                <div class="cuenta-items">
+                    <div class="cuenta-item">
+                        <span>2x Paella Valenciana</span>
+                        <span>30.00€</span>
+                    </div>
+                    <div class="cuenta-item">
+                        <span>3x Cerveza</span>
+                        <span>9.00€</span>
+                    </div>
+                    <div class="cuenta-item">
+                        <span>2x Postre del día</span>
+                        <span>12.00€</span>
+                    </div>
+                    <div class="cuenta-item">
+                        <span>2x Café</span>
+                        <span>4.50€</span>
+                    </div>
+                </div>
+                <button class="btn-cobrar" onclick="mostrarOpcionesPago()">Cobrar Mesa</button>
+                
+                <!-- Opciones de Pago -->
+                <div id="opcionesPago" class="opciones-pago">
+                    <h4>Seleccione método de pago</h4>
+                    <div class="metodo-pago" onclick="seleccionarMetodoPago('efectivo')">
+                        <img src="https://cdn-icons-png.flaticon.com/512/2489/2489756.png" alt="Efectivo">
+                        <div class="metodo-pago-info">
+                            <div class="metodo-pago-titulo">Efectivo</div>
+                            <div class="metodo-pago-descripcion">Pago en metálico</div>
+                        </div>
+                    </div>
+                    <div class="metodo-pago" onclick="seleccionarMetodoPago('tarjeta')">
+                        <img src="https://cdn-icons-png.flaticon.com/512/179/179457.png" alt="Tarjeta">
+                        <div class="metodo-pago-info">
+                            <div class="metodo-pago-titulo">Tarjeta</div>
+                            <div class="metodo-pago-descripcion">Crédito o débito</div>
+                        </div>
+                    </div>
+                    <div class="metodo-pago" onclick="seleccionarMetodoPago('bizum')">
+                        <img src="https://cdn-icons-png.flaticon.com/512/5968/5968908.png" alt="Bizum">
+                        <div class="metodo-pago-info">
+                            <div class="metodo-pago-titulo">Bizum</div>
+                            <div class="metodo-pago-descripcion">Pago móvil instantáneo</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detalles específicos de cada método -->
+                <div id="detallesEfectivo" class="detalles-pago opciones-pago">
+                    <h4>Pago en Efectivo</h4>
+                    <div class="input-group">
+                        <label>Cantidad recibida:</label>
+                        <input type="number" id="cantidadRecibida" onchange="calcularCambio()" step="0.01">
+                    </div>
+                    <div class="cambio-info">
+                        <p>Cambio a devolver: <span id="cambioDevolver">0.00</span>€</p>
+                    </div>
+                </div>
+
+                <div id="detallesTarjeta" class="detalles-pago opciones-pago">
+                    <h4>Pago con Tarjeta</h4>
+                    <p>Por favor, acerque el datáfono al cliente</p>
+                    <div class="datofono-status">
+                        <p>Esperando pago...</p>
+                    </div>
+                </div>
+
+                <div id="detallesBizum" class="detalles-pago opciones-pago">
+                    <h4>Pago con Bizum</h4>
+                    <div class="bizum-info">
+                        <p>Número para Bizum: 666777888</p>
+                        <p>Concepto: Mesa <span id="mesaBizum"></span></p>
+                    </div>
+                </div>
+
+                <button id="btnProcesarPago" class="btn-procesar-pago" onclick="procesarPago()">Procesar Pago</button>
+                <div id="volverOpciones" class="volver-opciones" onclick="volverAOpciones()">← Volver a opciones de pago</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById('modalCuenta');
+        const numeroMesaSpan = document.getElementById('numeroMesaModal');
+        let mesaActual = null;
+
+        function mostrarDetallesMesa(numeroMesa) {
+            mesaActual = numeroMesa;
+            numeroMesaSpan.textContent = numeroMesa;
+            modal.style.display = 'block';
+            console.log('Mostrando detalles de la mesa ' + numeroMesa);
+        }
+
+        function cerrarModal() {
+            modal.style.display = 'none';
+        }
+
+        function mostrarOpcionesPago() {
+            document.querySelector('.btn-cobrar').style.display = 'none';
+            document.getElementById('opcionesPago').classList.add('visible');
+        }
+
+        function seleccionarMetodoPago(metodo) {
+            // Ocultar todas las opciones de pago
+            document.getElementById('opcionesPago').classList.remove('visible');
+            
+            // Mostrar los detalles del método seleccionado
+            document.querySelectorAll('.detalles-pago').forEach(el => el.classList.remove('visible'));
+            document.getElementById('detalles' + metodo.charAt(0).toUpperCase() + metodo.slice(1)).classList.add('visible');
+            
+            // Mostrar el botón de procesar pago y volver
+            document.getElementById('btnProcesarPago').classList.add('visible');
+            document.getElementById('volverOpciones').classList.add('visible');
+
+            // Configurar elementos específicos según el método
+            if (metodo === 'bizum') {
+                document.getElementById('mesaBizum').textContent = mesaActual;
+            }
+        }
+
+        function volverAOpciones() {
+            // Ocultar detalles específicos y mostrar opciones generales
+            document.querySelectorAll('.detalles-pago').forEach(el => el.classList.remove('visible'));
+            document.getElementById('opcionesPago').classList.add('visible');
+            document.getElementById('btnProcesarPago').classList.remove('visible');
+            document.getElementById('volverOpciones').classList.remove('visible');
+        }
+
+        function calcularCambio() {
+            const total = 85.50; // Este valor debería venir del total real de la cuenta
+            const recibido = parseFloat(document.getElementById('cantidadRecibida').value) || 0;
+            const cambio = (recibido - total).toFixed(2);
+            document.getElementById('cambioDevolver').textContent = cambio;
+        }
+
+        function procesarPago() {
+            // Aquí iría la lógica específica para cada método de pago
+            console.log('Procesando pago...');
+            // Simular procesamiento
+            setTimeout(() => {
+                alert('Pago procesado correctamente');
+                cerrarModal();
+                // Actualizar el estado de la mesa a libre
+                const mesaElement = document.querySelector(`.mesa:nth-child(${mesaActual})`);
+                mesaElement.classList.remove('mesa-ocupada');
+                mesaElement.classList.add('mesa-libre');
+            }, 1000);
+        }
+
+        function entregarItem(numeroPedido, item) {
+            console.log(`Entregando ${item} del pedido #${numeroPedido}`);
+            const boton = event.target;
+            const itemInfo = boton.previousElementSibling;
+            const estado = itemInfo.querySelector('.pedido-estado');
+            estado.textContent = 'Entregado';
+            boton.style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

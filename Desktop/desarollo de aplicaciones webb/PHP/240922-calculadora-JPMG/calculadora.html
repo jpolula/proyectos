@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>calculadora</title>
+    </head>
+    <body>
+        <form action="calculadora.php" method="post">
+            edad 1<input type="text" name="valor1">
+            edad 2<input type="text" name="valor2">
+            <input type="submit" value="aceptar">
+            <input type="reset" value="borrar">
+            <label for="operacion">elige una operacion</label>
+            <select name="operacion" id="operacion">
+                <option value="suma" name="suma">Suma</option>
+                <option value="resta" name="resta">Resta</option>
+                <option value="multiplicacion" name="multiplicacion">Multiplicación</option>
+                <option value="division" name="division">División</option>
+            </select>
+        </form>
+    </body>
+</html>

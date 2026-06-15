@@ -1,0 +1,3 @@
+añadir lets encript
+desplegar una aplicacion con nginx y php.
+poner un sevidor proxy con 2 balanceos de carga

@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="es">
+<head>
+<link rel="stylesheet" type="text/css" href="base.css" />
+<link rel="stylesheet" type="text/css" href="content.css" />
+<link rel="stylesheet" type="text/css" href="nav.css" />
+<meta http-equiv="content-type" content="text/html;  charset=utf-8" />
+<title>StatefulSets | MODULO 9 </title>
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+<meta name="author" content="JAVI" />
+<link rel="license" type="text/html" href="http://creativecommons.org/licenses/by-sa/4.0/" />
+<meta name="generator" content="eXeLearning 2.8.1 - exelearning.net" />
+<!--[if lt IE 9]><script type="text/javascript" src="exe_html5.js"></script><![endif]-->
+<script type="text/javascript" src="exe_jquery.js"></script>
+<script type="text/javascript" src="common_i18n.js"></script>
+<script type="text/javascript" src="common.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body class="exe-web-site" id="exe-node-1"><script type="text/javascript">document.body.className+=" js"</script>
+<div id="content">
+<p id="skipNav"><a href="#main" class="sr-av">Saltar la navegación</a></p>
+<header id="header" ><div id="headerContent">MODULO 9</div></header>
+<nav id="siteNav">
+<ul>
+   <li><a href="index.html" class="daddy main-node">Otras cargas de trabajo</a></li>
+   <li id="active"><a href="statefulsets.html" class="active no-ch">StatefulSets</a></li>
+   <li><a href="ejemplo_despliegue_de_un_cluster_de_mysql.html" class="no-ch">Ejemplo: Despliegue de un cluster de MySQL</a></li>
+   <li><a href="daemonsets.html" class="no-ch">DaemonSets</a></li>
+   <li><a href="jobs_y_cronjobs.html" class="no-ch">Jobs y CronJobs</a></li>
+   <li><a href="crditos.html" class="no-ch">Créditos</a></li>
+</ul>
+</nav>
+<div id='topPagination'>
+<nav class="pagination noprt">
+<a href="index.html" class="prev"><span><span>&laquo; </span>Anterior</span></a> <span class="sep">| </span><a href="ejemplo_despliegue_de_un_cluster_de_mysql.html" class="next"><span>Siguiente<span> &raquo;</span></span></a>
+</nav>
+</div>
+<div id="main-wrapper">
+<section id="main">
+<header id="nodeDecoration"><h1 id="nodeTitle">StatefulSets</h1></header>
+<article class="iDevice_wrapper textIdevice" id="id1">
+<div class="iDevice emphasis0" >
+<div id="ta1_151_2" class="block iDevice_content">
+<div class="exe-text"><p>El objeto <a href="https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/" rel="nofollow">StatefulSet</a> controla el despliegue de Pods con identidades únicas y persistentes, y nombres de host estables. El uso de StatefulSets es alternativo al de despliegues (Deployments) y su objetivo principal es poder utilizar en Kubernetes aplicaciones más restrictivas que no se ajusten bien a las características de los despliegues, principalmente aplicaciones con estado que necesiten algunas características fijas y estables en los Pods, algo que no puede ocurrir con los despliegues en los pods que son completamente indistinguibles unos de otros y la aplicación puede utilizar cualquiera de ellos en cada momento.</p>
+<p>Veamos algunos ejemplos en los es adecuado utilizar StatefulSet en lugar de Deployment y por qué:</p>
+<ul>
+<li>Un despliegue de redis primario-secundario: necesita que <strong>el primario esté operativo antes de que podamos configurar las réplicas</strong>.</li>
+<li>Un cluster mongodb: Los diferentes nodos deben <strong>tener una identidad de red persistente</strong> (ya que el DNS es estático), para que se produzca la sincronización después de reinicios o fallos.</li>
+<li>Zookeeper: cada nodo necesita <strong>almacenamiento único y estable</strong>, ya que el identificador de cada nodo se guarda en un fichero.</li>
+</ul>
+<p>Por lo tanto el objeto StatefulSet nos ofrece las siguientes <strong>características</strong>:</p>
+<ul>
+<li>Estable y único identificador de red (Ejemplo mongodb)</li>
+<li>Almacenamiento estable (Ejemplo Zookeeper)</li>
+<li>Despliegues y escalado ordenado (Ejemplo redis)</li>
+<li>Eliminación y actualizaciones ordenadas</li>
+</ul>
+<p><strong>Por lo tanto cada Pod es distinto (tiene una identidad única)</strong>, y este hecho tiene algunas consecuencias:</p>
+<ul>
+<li>El nombre de cada Pod tendrá un número (1,2,...) que lo identifica y que nos proporciona la posibilidad de que la creación actualización y eliminación sea ordenada. Se crearán en orden ascendente y se eliminarán en orden descendente.</li>
+<li>Si un nuevo Pod es recreado, obtendrá el mismo nombre (hostname), los mismos nombres DNS (aunque la IP pueda cambiar) y el mismo volumen que tenía asociado.</li>
+<li>Necesitamos crear un Service especial, llamado <strong>Headless Service</strong>, que nos permite acceder a los Pods de forma independiente, pero que no balancea la carga entre ellos, por lo tanto este Service no tendrá una ClusterIP.</li>
+</ul>
+<h2>StatefulSet vs Deployment</h2>
+<ul>
+<li>A diferencia de un Deployment, un StatefulSet mantiene una identidad fija para cada uno de sus Pods.</li>
+<li>Eliminar y/o escalar un StatefulSet no eliminará los volúmenes asociados con StatefulSet.</li>
+<li>StatefulSets actualmente requiere que un Headless Service sea responsable de la identidad de red de los Pods.</li>
+<li>Al utilizar StatefulSet, cada Pod recibe un PersistentVolume independiente.</li>
+<li>StatefulSet actualmente no admite el escalado automático.</li>
+</ul>
+<h2>Creando el <em>Headless Service</em> para acceder a los Pods del StatefulSet</h2>
+<p>Una de las características de los Pods controlados por un StatefulSet es que son únicos (todos los Pods son distintos), por lo tanto al acceder a ellos por medio de la definición de un Service no necesitamos el balanceo de carga entre ellos.</p>
+<p>Para acceder a los Pods de un StatefulSet vamos a crear un Service Headless que se caracteriza por no tener IP (ClusterIP) y por lo tanto no va a balancear la carga entre los distintos Pods. Este tipo de Service va a crear una entrada DNS por cada Pod, que nos permitirá acceder a cada Pod de forma independiente. El nombre DNS que se creará será <code>&lt;nombre del Pod&gt;.&lt;dominio del StatefulSet&gt;</code>. El dominio del StatefulSet se indicará en la definición del recurso usando el parámetro <code>serviceName</code>.</p>
+<p>Veamos un ejemplo de definición de un Headless Service (fichero <a href="service.yaml"><code>service.yaml</code></a>):</p>
+<div class="highlight highlight-source-yaml position-relative">
+<pre><span class="pl-ent">apiVersion</span>: <span class="pl-c1">v1</span>
+<span class="pl-ent">kind</span>: <span class="pl-s">Service</span>
+<span class="pl-ent">metadata</span>:
+  <span class="pl-ent">name</span>: <span class="pl-s">nginx</span>
+  <span class="pl-ent">labels</span>:
+    <span class="pl-ent">app</span>: <span class="pl-s">nginx</span>
+<span class="pl-ent">spec</span>:
+  <span class="pl-ent">ports</span>:
+  - <span class="pl-ent">port</span>: <span class="pl-c1">80</span>
+    <span class="pl-ent">name</span>: <span class="pl-s">web</span>
+  <span class="pl-ent">clusterIP</span>: <span class="pl-s">None</span>
+  <span class="pl-ent">selector</span>:
+    <span class="pl-ent">app</span>: <span class="pl-s">nginx</span></pre>
+</div>
+<p>En esta definición podemos observar que al indicar <code>clusterIP: None</code> estamos creando un Headless Service, que no tendrá ClusterIP (por lo que no balanceará la carga entre los pods). Este Service será el responsable de crear, por cada Pod seleccionado con el <code>selector</code>, una entrada DNS.</p>
+<h2>Creando el recurso StatefulSet</h2>
+<p>Vamos a definir nuestro recurso StatefulSet en un fichero yaml <code><a href="statefulset.yaml">statefulset.yaml</a></code>:</p>
+<div class="highlight highlight-source-yaml position-relative">
+<pre><span class="pl-ent">apiVersion</span>: <span class="pl-s">apps/v1</span>
+<span class="pl-ent">kind</span>: <span class="pl-s">StatefulSet</span>
+<span class="pl-ent">metadata</span>:
+  <span class="pl-ent">name</span>: <span class="pl-s">web</span>
+<span class="pl-ent">spec</span>:
+  <span class="pl-ent">serviceName</span>: <span class="pl-s"><span class="pl-pds">"</span>nginx<span class="pl-pds">"</span></span>
+  <span class="pl-ent">replicas</span>: <span class="pl-c1">2</span>
+  <span class="pl-ent">selector</span>:
+    <span class="pl-ent">matchLabels</span>:
+      <span class="pl-ent">app</span>: <span class="pl-s">nginx</span>
+  <span class="pl-ent">template</span>:
+    <span class="pl-ent">metadata</span>:
+      <span class="pl-ent">labels</span>:
+        <span class="pl-ent">app</span>: <span class="pl-s">nginx</span>
+    <span class="pl-ent">spec</span>:
+      <span class="pl-ent">containers</span>:
+      - <span class="pl-ent">name</span>: <span class="pl-s">nginx</span>
+        <span class="pl-ent">image</span>: <span class="pl-s">k8s.gcr.io/nginx-slim:0.8</span>
+        <span class="pl-ent">ports</span>:
+        - <span class="pl-ent">containerPort</span>: <span class="pl-c1">80</span>
+          <span class="pl-ent">name</span>: <span class="pl-s">web</span>
+        <span class="pl-ent">volumeMounts</span>:
+        - <span class="pl-ent">name</span>: <span class="pl-s">www</span>
+          <span class="pl-ent">mountPath</span>: <span class="pl-s">/usr/share/nginx/html</span>
+  <span class="pl-ent">volumeClaimTemplates</span>:
+  - <span class="pl-ent">metadata</span>:
+      <span class="pl-ent">name</span>: <span class="pl-s">www</span>
+    <span class="pl-ent">spec</span>:
+      <span class="pl-ent">accessModes</span>: <span class="pl-s">[ "ReadWriteOnce" ]</span>
+      <span class="pl-ent">resources</span>:
+        <span class="pl-ent">requests</span>:
+          <span class="pl-ent">storage</span>: <span class="pl-s">1Gi</span></pre>
+</div>
+<p>Vamos a estudiar las características de la definición de este recurso:</p>
+<ul>
+<li>Con el parámetro <code>serviceName</code> indicaremos el nombre de dominio que va a formar parte del nombre DNS que el Headless Service va a crear para cada Pod.</li>
+<li>Con el parámetro <code>selector</code> se indica los Pods que vamos a controlar con StatefulSet.</li>
+<li>Una de las características que hemos indicado del StatefulSet es que cada Pod va a tener un almacenamiento estable. El tipo de almacenamiento se indica con el parámetro <code>volumeClaimTemplates</code> que se define de forma similar a un <code>PersistentVolumenClaim</code>.</li>
+<li>Además observamos en la definición del contenedor que el almacenamiento que hemos definido se va a montar en cada Pod (en este ejemplo el punto de montaje es el DocumentRoot de nginx), con el parámetro <code>volumeMounts</code>.</li>
+</ul>
+<h2>Ejemplo: Creación de un StatefulSet</h2>
+<p>Vamos a crear los recursos estudiados en este apartado: el Service Headless y el StatefulSet, y vamos a comprobar sus características.</p>
+<p>Lo primero es crear el Headless Service:</p>
+<div class="highlight highlight-source-shell position-relative">
+<pre>kubectl apply -f service.yaml</pre>
+</div>
+<h3>Creación ordenada de Pods</h3>
+<p>El statefulSet que hemos definido va a crear dos Pods (<code>replicas: 2</code>). Para observar cómo se crean de forma ordenada podemos usar dos terminales, en la primera ejecutamos:</p>
+<div class="highlight highlight-source-shell position-relative">
+<pre>watch kubectl get pod</pre>
+</div>
+<p>Con esta instrucción vamos a ver en "vivo" cómo se van creando los Pods, que vamos a crear al ejecutar en otra terminal la instrucción:</p>
+<div class="highlight highlight-source-shell position-relative">
+<pre>kubectl apply -f statefulset.yaml</pre>
+</div>
+<h3>Comprobamos la identidad de red estable</h3>
+<p>En este caso vamos a comprobar que los hostname y los nombres DNS son estables para cada Pod. Las ips de los Pods pueden cambiar si eliminamos el recurso StatefulSet y lo volvemos a crear, pero los nombres van a permanecer.</p>
+<p>Para ver los nombres de los Pods podemos ejecutar lo siguiente:</p>
+<div class="highlight highlight-source-shell position-relative">
+<pre><span class="pl-k">for</span> <span class="pl-smi">i</span> <span class="pl-k">in</span> 0 1<span class="pl-k">;</span> <span class="pl-k">do</span> kubectl <span class="pl-c1">exec</span> web-<span class="pl-smi">$i</span> -- sh -c <span class="pl-s"><span class="pl-pds">'</span>hostname<span class="pl-pds">'</span></span><span class="pl-k">;</span> <span class="pl-k">done</span>
+web-0
+web-1</pre>
+</div>
+<p>Veamos los nombres DNS. En este ejemplo el Headless Service ha creado una entrada en el DNS para cada Pod. El nombre DNS que se creará será <code>&lt;nombre del pod&gt;.&lt;dominio del StatefulSet&gt;</code>. El dominio del StatefulSet se indicará en la definición del recurso usando el parámetro <code>serviceName</code>. En este caso el nombre del primer Pod será <code>web-0.nginx</code>. Vamos a comprobarlo, haciendo una consulta DNS desde otro pod:</p>
+<div class="highlight highlight-source-shell position-relative">
+<pre>kubectl run -i --tty --image busybox:1.28 dns-test --restart=Never --rm
+/ <span class="pl-c"># nslookup web-0.nginx</span>
+...
+Address 1: 172.17.0.4 web-0.nginx.default.svc.cluster.local
+/ <span class="pl-c"># nslookup web-1.nginx</span>
+...
+Address 1: 172.17.0.5 web-1.nginx.default.svc.cluster.local</pre>
+</div>
+<h3>Eliminación de pods</h3>
+<p>Podemos usar las dos terminales para observar cómo la eliminación también se hace de forma ordenada. En la primera terminal ejecutamos:</p>
+<div class="highlight highlight-source-shell position-relative">
+<pre>watch kubectl get pod</pre>
+</div>
+<p>Y en la segunda:</p>
+<div class="highlight highlight-source-shell position-relative">
+<pre>kubectl delete pod -l app=nginx</pre>
+</div>
+<p>Al eliminar los Pods, el statefulSet ha creado nuevos Pods que serán idénticos a los anteriores y por lo tanto mantendrán la identidad de red, es decir tendrán los mismos hostname y los mismos nombres DNS (aunque es posible que cambien las ip):</p>
+<div class="highlight highlight-source-shell position-relative">
+<pre><span class="pl-k">for</span> <span class="pl-smi">i</span> <span class="pl-k">in</span> 0 1<span class="pl-k">;</span> <span class="pl-k">do</span> kubectl <span class="pl-c1">exec</span> web-<span class="pl-smi">$i</span> -- sh -c <span class="pl-s"><span class="pl-pds">'</span>hostname<span class="pl-pds">'</span></span><span class="pl-k">;</span> <span class="pl-k">done</span>
+web-0
+web-1
+
+kubectl run -i --tty --image busybox:1.28 dns-test --restart=Never --rm
+/ <span class="pl-c"># nslookup web-0.nginx</span>
+...
+/ <span class="pl-c"># nslookup web-1.nginx</span>
+...</pre>
+</div>
+<h3>Escribiendo en los volúmenes persistente</h3>
+<p>Podemos comprobar que se han creado los distintos volúmenes para cada pod:</p>
+<div class="highlight highlight-source-shell position-relative">
+<pre>kubectl get pv,pvc</pre>
+</div>
+<p>Y podemos comprobar que realmente la información que guardemos en el directorio que hemos montado en cada Pod es persistente:</p>
+<div class="highlight highlight-source-shell position-relative">
+<pre><span class="pl-k">for</span> <span class="pl-smi">i</span> <span class="pl-k">in</span> 0 1<span class="pl-k">;</span> <span class="pl-k">do</span> kubectl <span class="pl-c1">exec</span> <span class="pl-s"><span class="pl-pds">"</span>web-<span class="pl-smi">$i</span><span class="pl-pds">"</span></span> -- sh -c <span class="pl-s"><span class="pl-pds">'</span>echo "$(hostname)" &gt; /usr/share/nginx/html/index.html<span class="pl-pds">'</span></span><span class="pl-k">;</span> <span class="pl-k">done</span>
+<span class="pl-k">for</span> <span class="pl-smi">i</span> <span class="pl-k">in</span> 0 1<span class="pl-k">;</span> <span class="pl-k">do</span> kubectl <span class="pl-c1">exec</span> -i -t <span class="pl-s"><span class="pl-pds">"</span>web-<span class="pl-smi">$i</span><span class="pl-pds">"</span></span> -- sh -c <span class="pl-s"><span class="pl-pds">'</span>curl http://localhost/<span class="pl-pds">'</span></span><span class="pl-k">;</span> <span class="pl-k">done</span>
+web-0
+web-1</pre>
+</div>
+<p>Ahora si eliminamos los Pods, los nuevos Pods creados mantendrán la información:</p>
+<div class="highlight highlight-source-shell position-relative">
+<pre>kubectl delete pod -l app=nginx
+<span class="pl-k">for</span> <span class="pl-smi">i</span> <span class="pl-k">in</span> 0 1<span class="pl-k">;</span> <span class="pl-k">do</span> kubectl <span class="pl-c1">exec</span> -i -t <span class="pl-s"><span class="pl-pds">"</span>web-<span class="pl-smi">$i</span><span class="pl-pds">"</span></span> -- sh -c <span class="pl-s"><span class="pl-pds">'</span>curl http://localhost/<span class="pl-pds">'</span></span><span class="pl-k">;</span> <span class="pl-k">done</span>
+web-0
+web-1</pre>
+</div></div>
+</div>
+</div>
+</article>
+<article class="iDevice_wrapper textIdevice em_iDevice em_iDevice_reproduccion" id="id14">
+<div class="iDevice emphasis1" >
+<header class="iDevice_header"><h1 class="iDeviceTitle">Vídeo: StatefulSets</h1></header>
+<div class="iDevice_inner">
+<div class="iDevice_content_wrapper">
+<div id="ta14_151_2" class="block iDevice_content">
+<div class="exe-text"><figure class="exe-figure exe-media position-center" style="width: 800px;"><iframe width="800" height="449" src="https://www.youtube.com/embed/ULaNgtJ8NHQ" allowfullscreen="allowfullscreen" data-mce-fragment="1"></iframe>
+<figcaption class="figcaption"><span class="title"><em>Vídeo: StatefulSets</em></span></figcaption>
+</figure>
+<p></p></div>
+</div>
+</div>
+</div>
+</div>
+</article>
+<div id="packageLicense" class="cc cc-by-sa">
+<p><span>Obra publicada con</span> <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Licencia Creative Commons Reconocimiento Compartir igual 4.0</a></p>
+</div>
+</section>
+</div>
+<div id='bottomPagination'>
+<nav class="pagination noprt">
+<a href="index.html" class="prev"><span><span>&laquo; </span>Anterior</span></a> <span class="sep">| </span><a href="ejemplo_despliegue_de_un_cluster_de_mysql.html" class="next"><span>Siguiente<span> &raquo;</span></span></a>
+</nav>
+</div>
+</div>
+<p id="made-with-eXe"><a href="https://exelearning.net/" target="_blank" rel="noopener"><span>Creado con eXeLearning<span> (Ventana nueva)</span></span></a></p><script type="text/javascript" src="_intef_js.js"></script></body></html>

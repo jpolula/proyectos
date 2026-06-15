@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es">
+<head>
+<link rel="stylesheet" type="text/css" href="base.css" />
+<link rel="stylesheet" type="text/css" href="content.css" />
+<link rel="stylesheet" type="text/css" href="nav.css" />
+<meta http-equiv="content-type" content="text/html;  charset=utf-8" />
+<title>Uso de volúmenes | MODULO 8 </title>
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+<meta name="author" content="JAVI" />
+<link rel="license" type="text/html" href="http://creativecommons.org/licenses/by-sa/4.0/" />
+<meta name="generator" content="eXeLearning 2.8.1 - exelearning.net" />
+<!--[if lt IE 9]><script type="text/javascript" src="exe_html5.js"></script><![endif]-->
+<script type="text/javascript" src="exe_jquery.js"></script>
+<script type="text/javascript" src="common_i18n.js"></script>
+<script type="text/javascript" src="common.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body class="exe-web-site" id="exe-node-4"><script type="text/javascript">document.body.className+=" js"</script>
+<div id="content">
+<p id="skipNav"><a href="#main" class="sr-av">Saltar la navegación</a></p>
+<header id="header" ><div id="headerContent">MODULO 8</div></header>
+<nav id="siteNav">
+<ul>
+   <li><a href="index.html" class="daddy main-node">Almacenamiento en Kubernetes</a></li>
+   <li><a href="volmenes_en_kubernetes.html" class="no-ch">Volúmenes en Kubernetes</a></li>
+   <li><a href="aprovisionamiento_de_volmenes.html" class="no-ch">Aprovisionamiento de volúmenes</a></li>
+   <li><a href="solicitud_de_volmenes.html" class="no-ch">Solicitud de volúmenes</a></li>
+   <li id="active"><a href="uso_de_volmenes.html" class="active no-ch">Uso de volúmenes</a></li>
+   <li><a href="ejemplo_1_gestin_esttica_de_volmenes.html" class="no-ch">Ejemplo 1: Gestión estática de volúmenes</a></li>
+   <li><a href="ejemplo_2_gestin_dinmica_de_volmenes.html" class="no-ch">Ejemplo 2: Gestión dinámica de volúmenes</a></li>
+   <li><a href="ejemplo_3_wordpress_con_almacenamiento_persistente.html" class="no-ch">Ejemplo 3: Wordpress con almacenamiento persistente</a></li>
+   <li><a href="crditos.html" class="no-ch">Créditos</a></li>
+</ul>
+</nav>
+<div id='topPagination'>
+<nav class="pagination noprt">
+<a href="solicitud_de_volmenes.html" class="prev"><span><span>&laquo; </span>Anterior</span></a> <span class="sep">| </span><a href="ejemplo_1_gestin_esttica_de_volmenes.html" class="next"><span>Siguiente<span> &raquo;</span></span></a>
+</nav>
+</div>
+<div id="main-wrapper">
+<section id="main">
+<header id="nodeDecoration"><h1 id="nodeTitle">Uso de volúmenes</h1></header>
+<article class="iDevice_wrapper textIdevice" id="id4">
+<div class="iDevice emphasis0" >
+<div id="ta4_137_2" class="block iDevice_content">
+<div class="exe-text"><p>Una vez que hemos solicitado el almacenamiento, y se ha asignado un volumen (ya sea de forma dinámica o estática), vamos a definir el uso que se va a hacer de este volumen.</p>
+<p>Como ejemplo, vamos a definir un Pod que utilice dicho volumen, para ello vamos a crear un fichero yaml con la siguiente definición:</p>
+<div class="highlight highlight-source-yaml position-relative">
+<pre><span class="pl-ent">kind</span>: <span class="pl-s">Pod</span>
+<span class="pl-ent">apiVersion</span>: <span class="pl-c1">v1</span>
+<span class="pl-ent">metadata</span>:
+  <span class="pl-ent">name</span>: <span class="pl-s">task-pv-pod</span>
+<span class="pl-ent">spec</span>:
+  <span class="pl-ent">volumes</span>:
+    - <span class="pl-ent">name</span>: <span class="pl-s">task-pv-storage</span>
+      <span class="pl-ent">persistentVolumeClaim</span>:
+       <span class="pl-ent">claimName</span>: <span class="pl-s">pvc1</span>
+  <span class="pl-ent">containers</span>:
+    - <span class="pl-ent">name</span>: <span class="pl-s">task-pv-container</span>
+      <span class="pl-ent">image</span>: <span class="pl-s">nginx</span>
+      <span class="pl-ent">ports</span>:
+        - <span class="pl-ent">containerPort</span>: <span class="pl-c1">80</span>
+          <span class="pl-ent">name</span>: <span class="pl-s"><span class="pl-pds">"</span>http-server<span class="pl-pds">"</span></span>
+      <span class="pl-ent">volumeMounts</span>:
+        - <span class="pl-ent">mountPath</span>: <span class="pl-s"><span class="pl-pds">"</span>/usr/share/nginx/html<span class="pl-pds">"</span></span>
+          <span class="pl-ent">name</span>: <span class="pl-s">task-pv-storage</span></pre>
+</div>
+<ul>
+<li>En la especificación de este Pod, además de indicar el contenedor, hemos indicado que va a tener un volumen (campo <code>volumes</code>).</li>
+<li>En realidad definimos una lista de volúmenes (en este caso solo definimos uno) indicando su nombre (<code>name</code>) y la solicitud del volumen (<code>persistentVolumeClaim</code>, <code>claimName</code>).</li>
+<li>Además en la definición del contenedor tendremos que indicar el punto de montaje del volumen (<code>volumeMounts</code>) señalando el directorio del contenedor (<code>mountPath</code>) y el nombre (<code>name</code>).</li>
+</ul>
+<p>Cuando el Pod termina, el pvc mantiene el volumen reservado (bound). Es necesario que se borre explícitamente el pvc para liberarlo.</p>
+<p>La recuperación del volumen dependerá de la política de reciclaje que tuviera asignada.</p></div>
+</div>
+</div>
+</article>
+<div id="packageLicense" class="cc cc-by-sa">
+<p><span>Obra publicada con</span> <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Licencia Creative Commons Reconocimiento Compartir igual 4.0</a></p>
+</div>
+</section>
+</div>
+<div id='bottomPagination'>
+<nav class="pagination noprt">
+<a href="solicitud_de_volmenes.html" class="prev"><span><span>&laquo; </span>Anterior</span></a> <span class="sep">| </span><a href="ejemplo_1_gestin_esttica_de_volmenes.html" class="next"><span>Siguiente<span> &raquo;</span></span></a>
+</nav>
+</div>
+</div>
+<p id="made-with-eXe"><a href="https://exelearning.net/" target="_blank" rel="noopener"><span>Creado con eXeLearning<span> (Ventana nueva)</span></span></a></p><script type="text/javascript" src="_intef_js.js"></script></body></html>

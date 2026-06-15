@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="es">
+<head>
+<link rel="stylesheet" type="text/css" href="base.css" />
+<link rel="stylesheet" type="text/css" href="content.css" />
+<link rel="stylesheet" type="text/css" href="nav.css" />
+<meta http-equiv="content-type" content="text/html;  charset=utf-8" />
+<title>Aprovisionamiento de volúmenes | MODULO 8 </title>
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+<meta name="author" content="JAVI" />
+<link rel="license" type="text/html" href="http://creativecommons.org/licenses/by-sa/4.0/" />
+<meta name="generator" content="eXeLearning 2.8.1 - exelearning.net" />
+<!--[if lt IE 9]><script type="text/javascript" src="exe_html5.js"></script><![endif]-->
+<script type="text/javascript" src="exe_jquery.js"></script>
+<script type="text/javascript" src="common_i18n.js"></script>
+<script type="text/javascript" src="common.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body class="exe-web-site" id="exe-node-2"><script type="text/javascript">document.body.className+=" js"</script>
+<div id="content">
+<p id="skipNav"><a href="#main" class="sr-av">Saltar la navegación</a></p>
+<header id="header" ><div id="headerContent">MODULO 8</div></header>
+<nav id="siteNav">
+<ul>
+   <li><a href="index.html" class="daddy main-node">Almacenamiento en Kubernetes</a></li>
+   <li><a href="volmenes_en_kubernetes.html" class="no-ch">Volúmenes en Kubernetes</a></li>
+   <li id="active"><a href="aprovisionamiento_de_volmenes.html" class="active no-ch">Aprovisionamiento de volúmenes</a></li>
+   <li><a href="solicitud_de_volmenes.html" class="no-ch">Solicitud de volúmenes</a></li>
+   <li><a href="uso_de_volmenes.html" class="no-ch">Uso de volúmenes</a></li>
+   <li><a href="ejemplo_1_gestin_esttica_de_volmenes.html" class="no-ch">Ejemplo 1: Gestión estática de volúmenes</a></li>
+   <li><a href="ejemplo_2_gestin_dinmica_de_volmenes.html" class="no-ch">Ejemplo 2: Gestión dinámica de volúmenes</a></li>
+   <li><a href="ejemplo_3_wordpress_con_almacenamiento_persistente.html" class="no-ch">Ejemplo 3: Wordpress con almacenamiento persistente</a></li>
+   <li><a href="crditos.html" class="no-ch">Créditos</a></li>
+</ul>
+</nav>
+<div id='topPagination'>
+<nav class="pagination noprt">
+<a href="volmenes_en_kubernetes.html" class="prev"><span><span>&laquo; </span>Anterior</span></a> <span class="sep">| </span><a href="solicitud_de_volmenes.html" class="next"><span>Siguiente<span> &raquo;</span></span></a>
+</nav>
+</div>
+<div id="main-wrapper">
+<section id="main">
+<header id="nodeDecoration"><h1 id="nodeTitle">Aprovisionamiento de volúmenes</h1></header>
+<article class="iDevice_wrapper textIdevice" id="id2">
+<div class="iDevice emphasis0" >
+<div id="ta2_135_2" class="block iDevice_content">
+<div class="exe-text"><p>Para que el administrador de Kubernetes defina los volúmenes disponibles en nuestro cluster tenemos dos posibilidades:</p>
+<h2><a id="user-content-aprovisionamiento-estático" class="anchor" aria-hidden="true" href="https://github.com/iesgn/curso_kubernetes_cep/blob/main/modulo8/aprovisionamiento.md#aprovisionamiento-estático"><svg class="octicon octicon-link" viewbox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"></svg></a></h2>
+<h2>Aprovisionamiento estático</h2>
+<p>En este caso, es el administrador del cluster el responsable de ir definiendo los distintos volúmenes disponibles en el cluster creando manualmente los distintos recursos PersistentVolumen (PV).</p>
+<p>Un PersistentVolumen es un objeto que representa los volúmenes disponibles en el cluster. En él se van a definir los detalles del <a href="https://kubernetes.io/docs/concepts/storage/persistent-volumes/#types-of-persistent-volumes" rel="nofollow">backend</a> de almacenamiento que vamos a utilizar, el tamaño disponible, los <a href="https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes" rel="nofollow">modos de acceso</a>, las <a href="https://kubernetes.io/docs/concepts/storage/persistent-volumes/#reclaim-policy" rel="nofollow">políticas de reciclaje</a>, etc.</p>
+<p>Tenemos tres modos de acceso, que dependen del backend que vamos a utilizar:</p>
+<ul>
+<li>ReadWriteOnce: read-write solo para un nodo (RWO)</li>
+<li>ReadOnlyMany: read-only para muchos nodos (ROX)</li>
+<li>ReadWriteMany: read-write para muchos nodos (RWX)</li>
+</ul>
+<p>Las políticas de reciclaje de volúmenes también dependen del backend y son:</p>
+<ul>
+<li>Retain: El PV no se elimina, aunque el PVC se elimine. El administrador debe borrar el contenido para la próxima asociación.</li>
+<li>Recycle: Reutilizar contenido. Se elimina el contenido y el volumen es de nuevo utilizable.</li>
+<li>Delete: Se borra después de su utilización.</li>
+</ul>
+<p>A modo de resumen, ponemos en la siguiente tabla los modos de acceso de algunos de los sistemas de almacenamiento más usados:</p>
+<table border="1">
+<thead>
+<tr>
+<th align="center">Plugin</th>
+<th align="center">ReadWriteOnce</th>
+<th align="center">ReadOnlyMany</th>
+<th align="center">ReadWriteMany</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">AWS EBS</td>
+<td align="center">✓</td>
+<td align="center">-</td>
+<td align="center">-</td>
+</tr>
+<tr>
+<td align="center">AzureFile</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td align="center">AzureDisk</td>
+<td align="center">✓</td>
+<td align="center">-</td>
+<td align="center">-</td>
+</tr>
+<tr>
+<td align="center">CephFS</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td align="center">Cinder</td>
+<td align="center">✓</td>
+<td align="center">-</td>
+<td align="center">-</td>
+</tr>
+<tr>
+<td align="center">GCEPersistentDisk</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">-</td>
+</tr>
+<tr>
+<td align="center">Glusterfs</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td align="center">HostPath</td>
+<td align="center">✓</td>
+<td align="center">-</td>
+<td align="center">-</td>
+</tr>
+<tr>
+<td align="center">iSCSI</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">-</td>
+</tr>
+<tr>
+<td align="center">NFS</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td align="center">RBD</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">-</td>
+</tr>
+</tbody>
+</table>
+<p>Por último, vemos un ejemplo de un fichero yaml que nos permite la definición de un <em>PersitentVolumen</em>:</p>
+<div class="highlight highlight-source-yaml position-relative">
+<pre><span class="pl-ent">apiVersion</span>: <span class="pl-c1">v1</span>
+<span class="pl-ent">kind</span>: <span class="pl-s">PersistentVolume</span>
+<span class="pl-ent">metadata</span>:
+  <span class="pl-ent">name</span>: <span class="pl-s">pv1</span>
+<span class="pl-ent">spec</span>:
+  <span class="pl-ent">storageClassName</span>: <span class="pl-s">manual</span>
+  <span class="pl-ent">capacity</span>:
+    <span class="pl-ent">storage</span>: <span class="pl-s">5Gi</span>
+  <span class="pl-ent">accessModes</span>:
+    - <span class="pl-s">ReadWriteOnce</span>
+  <span class="pl-ent">persistentVolumeReclaimPolicy</span>: <span class="pl-s">Recycle</span>
+  <span class="pl-ent">hostPath</span>:
+    <span class="pl-ent">path</span>: <span class="pl-s">/data/pv1</span></pre>
+</div>
+<ul>
+<li><code>storageClassName: manual</code>: Indica que este volumen se puede asignar de forma estática, sin utilizar ningún "aprovisonador" de almacenamiento.</li>
+<li>Se indica al tamaño del volumen, con <code>capacity</code>, <code>storage</code>.</li>
+<li><code>accessModes</code>: El modo de acceso.</li>
+<li><code>persistentVolumeReclaimPolicy</code>: La política de reciclaje.</li>
+<li>Y por útimo se indica el tipo (backend) de almacenamiento, en este caso es de tipo <code>hostPath</code> que creará un directorio (<code>/data/pv1</code>) en el nodo para guardar la información.</li>
+</ul>
+<h2>Aprovisionamiento dinámico</h2>
+<p>Cuando el desarrollador necesita almacenamiento para su aplicación, hace una petición de almacenamiento creando un recurso PersistentVolumenClaim (PVC) y de forma dinámica se crea el recurso PersistentVolume que representa el volumen y se asocia con esa petición. De otra forma explicado, cada vez que se cree un PersistentVolumenClaim, se creará bajo demanda un PersistentVolumen que se ajuste a las características seleccionadas.</p>
+<p>Para conseguir la <a href="https://kubernetes.io/docs/concepts/storage/dynamic-provisioning/" rel="nofollow">gestión dinámica de volúmenes</a>, necesitamos <a href="https://kubernetes.io/docs/concepts/storage/storage-classes/#provisioner" rel="nofollow">un "aprovisionador" de almacenamiento</a> (tendremos distintos aprovisionadores para los distintos tipos de almacenamiento).</p>
+<p>Para definir los "aprovisionadores" de almacenamiento, usaremos el objeto <em>StorageClass</em>. En Minikube, por defecto, ya tenemos un provisionador para almacenamiento del tipo <em>hostPath</em> (monta un directorio del host en el pod).</p>
+<div class="highlight highlight-source-shell position-relative">
+<pre>kubectl get storageclass
+NAME                 PROVISIONER                RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
+standard (default)   k8s.io/minikube-hostpath   Delete          Immediate           <span class="pl-c1">false</span>                  46d</pre>
+</div>
+<p>En este caso la configuración del objeto <code>storageclass</code> se definió con las siguientes características:</p>
+<ul>
+<li>La política de reciclaje tiene el valor <code>Delete</code>.</li>
+<li>Y el modo de asociación (<code>VOLUMEBINDINGMODE</code>) tiene el valor <code>Immediate</code>, es decir, cuando se cree el objeto PersistenVolumenClaim se asociará de forma dinámica un volumen (objeto PersistenVolumen) inmediatamente. Otro valor podría ser <code>WaitForFirstConsumer</code>, en ese caso la asociación se haría cuando se utilizará el volumen.</li>
+</ul></div>
+</div>
+</div>
+</article>
+<article class="iDevice_wrapper textIdevice em_iDevice em_iDevice_reproduccion" id="id18">
+<div class="iDevice emphasis1" >
+<header class="iDevice_header"><h1 class="iDeviceTitle">Vídeo: Aprovisionamiento de volúmenes</h1></header>
+<div class="iDevice_inner">
+<div class="iDevice_content_wrapper">
+<div id="ta18_135_2" class="block iDevice_content">
+<div class="exe-text"><figure class="exe-figure exe-media position-center" style="width: 800px;"><iframe width="800" height="449" src="https://www.youtube.com/embed/7D9R0_f60-Q" allowfullscreen="allowfullscreen" data-mce-fragment="1"></iframe>
+<figcaption class="figcaption"><span class="title"><em>Vídeo: Aprovisionamiento de volúmenes</em></span></figcaption>
+</figure>
+<p></p></div>
+</div>
+</div>
+</div>
+</div>
+</article>
+<div id="packageLicense" class="cc cc-by-sa">
+<p><span>Obra publicada con</span> <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Licencia Creative Commons Reconocimiento Compartir igual 4.0</a></p>
+</div>
+</section>
+</div>
+<div id='bottomPagination'>
+<nav class="pagination noprt">
+<a href="volmenes_en_kubernetes.html" class="prev"><span><span>&laquo; </span>Anterior</span></a> <span class="sep">| </span><a href="solicitud_de_volmenes.html" class="next"><span>Siguiente<span> &raquo;</span></span></a>
+</nav>
+</div>
+</div>
+<p id="made-with-eXe"><a href="https://exelearning.net/" target="_blank" rel="noopener"><span>Creado con eXeLearning<span> (Ventana nueva)</span></span></a></p><script type="text/javascript" src="_intef_js.js"></script></body></html>

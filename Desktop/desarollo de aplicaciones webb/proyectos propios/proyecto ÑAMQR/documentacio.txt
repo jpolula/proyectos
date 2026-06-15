@@ -1,0 +1,250 @@
+Sistema WebSocket y comunicación en tiempo real entre Cocina y Camareros
+Arquitectura del sistema WebSocket
+El sistema WebSocket es el núcleo de la comunicación en tiempo real entre la cocina y los camareros. Este sistema permite que las actualizaciones de los pedidos y productos se transmitan instantáneamente sin necesidad de recargar la página.
+
+Componentes del sistema WebSocket
+1. Servidor WebSocket (
+servidorWebsocket.php
+)
+
+Este es el componente central que gestiona todas las conexiones y la distribución de mensajes:
+
+Tecnología: Utiliza la librería Ratchet para PHP, que implementa el protocolo WebSocket
+Puerto: Corre en el puerto 8080 del servidor
+Estructura: Implementa la interfaz MessageComponentInterface con métodos para manejar:
+Nuevas conexiones (
+onOpen
+)
+Recepción de mensajes (
+onMessage
+)
+Cierre de conexiones (
+onClose
+)
+Errores (
+onError
+)
+Organización de clientes: Los clientes se clasifican en categorías:
+php
+protected $clientesTipo = [
+    'cocina' => [],
+    'barra' => [],
+    'camarero' => [],
+    'cliente' => []
+];
+2. Cliente de Cocina (
+js/cocina.js
+)
+
+La interfaz de cocina se conecta al WebSocket para:
+
+Registrarse como cliente tipo "cocina"
+Recibir notificaciones de nuevos pedidos
+Enviar notificaciones cuando los productos están listos
+Gestionar reconexiones automáticas en caso de pérdida de conexión
+3. Cliente de Camarero (
+js/camarero.js
+)
+
+La interfaz de camarero se conecta al WebSocket para:
+
+Registrarse como cliente tipo "camarero"
+Recibir notificaciones cuando los productos están listos para servir
+Enviar confirmaciones cuando los productos son servidos
+Gestionar reconexiones automáticas
+Flujo de comunicación en tiempo real
+1. Establecimiento de conexiones
+Desde la Cocina:
+
+javascript
+// Iniciar WebSocket
+function iniciarWebSocket() {
+    const wsUrl = 'ws://localhost:8080';
+    window.ws = new WebSocket(wsUrl);
+    
+    window.ws.onopen = function() {
+        // Registrarse como tipo cocina
+        const registro = {
+            tipo: 'registro',
+            tipoCliente: 'cocina'
+        };
+        window.ws.send(JSON.stringify(registro));
+        // ...
+    };
+    // ...
+}
+Desde el Camarero:
+
+javascript
+function iniciarWebSocket() {
+    const wsUrl = 'ws://localhost:8080';
+    window.wsCamarero = new WebSocket(wsUrl);
+    
+    window.wsCamarero.onopen = function() {
+        // Registrarse como tipo camarero
+        window.wsCamarero.send(JSON.stringify({
+            tipo: 'registro',
+            tipoCliente: 'camarero'
+        }));
+        // ...
+    };
+    // ...
+}
+2. Procesamiento de estados en Cocina
+Cuando un cocinero cambia el estado de un producto a "listo", ocurre lo siguiente:
+
+Actualización local: El producto cambia de estado visualmente en la interfaz
+Actualización en base de datos: Se guarda el cambio mediante una petición AJAX a cocina.php
+Notificación por WebSocket: Se envía un mensaje a través del WebSocket
+javascript
+// Si el producto está listo, enviar notificación WebSocket
+if (estado === 'listo') {
+    if (window.ws && window.ws.readyState === WebSocket.OPEN) {
+        const notificacion = {
+            tipo: 'productoListo',
+            mensaje: `¡Producto listo para la mesa ${numMesa || 'sin mesa'}!`,
+            codProducto: codProducto,
+            codPedido: codPedido,
+            numMesa: numMesa
+        };
+        window.ws.send(JSON.stringify(notificacion));
+    }
+}
+3. Distribución de mensajes en el servidor
+El servidor WebSocket recibe los mensajes y los distribuye según su tipo:
+
+php
+switch ($tipoMensaje) {
+    case 'productoListo':
+    case 'pedidoListo':
+        $tiposDestino = ['camarero', 'cocina'];
+        break;
+
+    case 'productoServido':
+    case 'pedidoServido':
+        $tiposDestino = ['cocina', 'camarero'];
+        break;
+    
+    case 'nuevoPedido':
+    case 'pedidoEnPreparacion':
+         $tiposDestino = ['cocina', 'camarero']; 
+         break;
+}
+
+// Enviar a todos los clientes del tipo específico
+$this->enviarATodos($mensaje, $tiposDestino, $from);
+4. Recepción y procesamiento en Camareros
+El camarero recibe las notificaciones y actualiza su interfaz:
+
+javascript
+window.wsCamarero.onmessage = function(event) {
+    try {
+        const mensaje = JSON.parse(event.data);
+        procesarNotificacionWebSocket(mensaje);
+    } catch (error) {
+        console.error('Error al procesar mensaje WebSocket:', error);
+    }
+};
+
+function procesarNotificacionWebSocket(mensaje) {
+    // Según el tipo de mensaje, actualizar la interfaz
+    switch (mensaje.tipo) {
+        case 'productoListo':
+            // Mostrar notificación y refrescar pedidos
+            crearNotificacion(`¡Producto listo para servir en mesa ${mensaje.numMesa}!`, 'success');
+            cargarPedidosListos();
+            break;
+        // ...
+    }
+}
+5. Sistema de actualización optimista
+El panel de camareros implementa una estrategia de "actualización optimista" para mejorar la experiencia:
+
+javascript
+function marcarComoServido(codDetalle) {
+    // 1. Buscar el elemento en la UI y eliminarlo inmediatamente (optimista)
+    const productoElement = document.querySelector(`.producto[data-cod-detalle="${codDetalle}"]`);
+    if (productoElement) {
+        const mesaContainer = productoElement.closest('.mesa-container');
+        productoElement.remove();
+        verificarYocultarMesaSiVacia(mesaContainer);
+    }
+
+    // 2. Enviar la solicitud al servidor en segundo plano
+    fetch('./camarero.php?action=marcarComoServido', {
+        method: 'POST',
+        body: JSON.stringify({ codDetalle: codDetalle })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            throw new Error(data.error || 'El servidor devolvió un error.');
+        }
+    })
+    .catch(err => {
+        // Si falla, revertir la actualización optimista recargando todo
+        console.error('Error al marcar como servido:', err.message);
+        crearNotificacion('Error de sincronización. Recargando pedidos...', 'error');
+        cargarPedidosListos();
+    });
+}
+Características avanzadas del sistema
+1. Reconexión automática
+Ambos paneles (cocina y camareros) implementan reconexión automática si pierden conexión:
+
+javascript
+window.ws.onclose = function(event) {
+    console.warn(`Conexión WebSocket cerrada. Reintentando en 3 segundos...`);
+    window.ws = null;
+    // Reintentar la conexión
+    setTimeout(iniciarWebSocket, 3000);
+};
+2. Actualización en cascada de estados
+El sistema actualiza todos los estados relacionados:
+
+Producto individual: Cambio de estado (pendiente → en preparación → listo → servido)
+Pedido completo: Se actualiza automáticamente cuando todos sus productos cambian
+Mesas: Se ocultan cuando todos sus pedidos han sido completados
+3. Notificaciones visuales
+El sistema implementa notificaciones visuales temporales:
+
+javascript
+function crearNotificacion(mensaje, tipo = 'info') {
+    const notificacion = document.createElement('div');
+    notificacion.className = `${clases[tipo] || 'bg-gray-500'} text-white px-4 py-2 rounded mb-2 shadow-md`;
+    notificacion.innerHTML = mensaje;
+    container.appendChild(notificacion);
+    // Auto-eliminar después de 3 segundos
+    setTimeout(() => notificacion.remove(), 3000);
+}
+Ciclo completo del pedido en cocina y camareros
+Recepción del pedido en cocina:
+Se recibe notificación WebSocket tipo nuevoPedido
+Se actualiza la interfaz de cocina mostrando el nuevo pedido
+El estado inicial es "pendiente"
+Proceso de preparación:
+El cocinero marca un producto como "en preparación"
+Se actualiza la base de datos
+Se envía mensaje WebSocket tipo pedidoEnPreparacion
+Se actualizan las interfaces de cocina y camareros
+Producto terminado:
+El cocinero marca el producto como "listo"
+Se actualiza la base de datos
+Se envía mensaje WebSocket tipo productoListo
+El producto aparece en la interfaz de camareros
+Entrega del producto:
+El camarero ve los productos listos agrupados por mesa
+Recoge el producto y lo marca como "servido"
+Se actualiza la base de datos
+Se envía mensaje WebSocket tipo productoServido
+El producto desaparece de ambas interfaces
+Si todos los productos de un pedido están servidos, el pedido se completa
+Pedido completo:
+Cuando todos los productos están servidos, el pedido se marca como completo
+Se envía mensaje WebSocket tipo pedidoServido para sincronizar todas las interfaces
+El pedido desaparece de los paneles
+Este flujo de trabajo permite una coordinación perfecta entre la cocina y los camareros, minimizando los tiempos de espera y asegurando que todos los productos se entreguen correctamente a los clientes.
+
+La arquitectura WebSocket proporciona una experiencia de usuario fluida y en tiempo real, sin necesidad de actualizaciones manuales de página, lo que mejora significativamente la eficiencia del proceso de servicio.
+
+Feedback submitted

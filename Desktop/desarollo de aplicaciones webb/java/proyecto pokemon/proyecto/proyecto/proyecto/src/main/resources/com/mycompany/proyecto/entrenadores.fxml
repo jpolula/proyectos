@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.text.Font?>
+
+<Pane prefHeight="505.0" prefWidth="878.0" style="-fx-background-color: black;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.proyecto.Entrenadores">
+   <padding>
+      <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+   </padding>
+   <children>
+      <Label fx:id="lbl" contentDisplay="CENTER" layoutX="307.0" layoutY="26.0" text="ELIGE A TU ENTRENADOR" textFill="WHITE" wrapText="true">
+         <font>
+            <Font size="18.0" />
+         </font></Label>
+      <Button fx:id="btnAceptar" layoutX="401.0" layoutY="461.0" mnemonicParsing="false" onAction="#aceptar" style="-fx-background-color: black; -fx-background-radius: 15;" text="ACEPTAR" textFill="WHITE">
+         <font>
+            <Font size="14.0" />
+         </font></Button>
+      <ListView fx:id="listEntrenador" layoutX="31.0" layoutY="73.0" onMouseClicked="#updateInfo" prefHeight="351.0" prefWidth="200.0" />
+      <ImageView fx:id="imgEntrenador" fitHeight="364.0" fitWidth="200.0" layoutX="313.0" layoutY="73.0" pickOnBounds="true" preserveRatio="true" />
+      <Button fx:id="btnPokedex" layoutX="92.0" layoutY="461.0" mnemonicParsing="false" onAction="#abrirPokedex" style="-fx-background-color: black; -fx-background-radius: 15;" text="POKEDEX" textFill="WHITE">
+         <font>
+            <Font size="14.0" />
+         </font>
+      </Button>
+      <ImageView fx:id="imgPokemon1" fitHeight="124.0" fitWidth="124.0" layoutX="597.0" layoutY="61.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@../../../../../../imagenes/aerodactyl.jpg" />
+         </image>
+      </ImageView>
+      <ImageView fitHeight="44.0" fitWidth="56.0" layoutX="561.0" layoutY="447.0" pickOnBounds="true" preserveRatio="true" />
+      <ImageView fx:id="imgPokemon2" fitHeight="124.0" fitWidth="156.0" layoutX="721.0" layoutY="61.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@../../../../../../imagenes/aerodactyl.jpg" />
+         </image>
+      </ImageView>
+      <ImageView fx:id="imgPokemon3" fitHeight="124.0" fitWidth="124.0" layoutX="597.0" layoutY="185.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@../../../../../../imagenes/aerodactyl.jpg" />
+         </image>
+      </ImageView>
+      <ImageView fx:id="imgPokemon4" fitHeight="124.0" fitWidth="124.0" layoutX="721.0" layoutY="185.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@../../../../../../imagenes/aerodactyl.jpg" />
+         </image>
+      </ImageView>
+      <ImageView fx:id="imgPokemon5" fitHeight="124.0" fitWidth="124.0" layoutX="597.0" layoutY="309.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@../../../../../../imagenes/aerodactyl.jpg" />
+         </image>
+      </ImageView>
+      <ImageView fx:id="imgPokemon6" fitHeight="124.0" fitWidth="124.0" layoutX="721.0" layoutY="309.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@../../../../../../imagenes/aerodactyl.jpg" />
+         </image>
+      </ImageView>
+   </children>
+</Pane>

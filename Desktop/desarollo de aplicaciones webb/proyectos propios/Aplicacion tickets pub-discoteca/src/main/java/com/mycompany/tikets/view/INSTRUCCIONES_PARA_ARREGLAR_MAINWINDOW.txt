@@ -1,0 +1,40 @@
+INSTRUCCIONES PARA ARREGLAR EL MÉTODO crearTicket EN MainWindow.java
+
+El archivo MainWindow.java está corrupto después de la última edición. Para arreglarlo, sigue estos pasos:
+
+1. Restaura el archivo desde la copia de seguridad:
+   - Copia MainWindow.java.bak a MainWindow.java
+
+2. Busca la sección donde se asignan los datos de configuración al ticket (alrededor de la línea 370)
+   - Reemplaza el código corrupto por el siguiente:
+
+```java
+// Asignar datos de configuración al ticket antes de guardarlo
+ticket.setFraseDelDia(config.getFraseDelDia());
+ticket.setCondicionesEntrada(config.getCondicionesEntrada());
+ticket.setCondicionesConsumicion(config.getCondicionesConsumicion());
+
+// Asignar icono desde la configuración
+String rutaIcono = config.getRutaIcono();
+if (rutaIcono != null && !rutaIcono.isEmpty()) {
+    ticket.setIcono(rutaIcono);
+    System.out.println("Icono asignado al ticket: " + rutaIcono);
+} else {
+    // Si no hay icono configurado, intentar usar el logo como alternativa
+    String rutaLogo = config.getRutaLogo();
+    if (rutaLogo != null && !rutaLogo.isEmpty()) {
+        ticket.setIcono(rutaLogo);
+        System.out.println("No hay icono configurado, usando logo como alternativa: " + rutaLogo);
+    } else {
+        System.out.println("No hay icono ni logo configurado en la configuración");
+    }
+}
+```
+
+3. Compila y prueba la aplicación para verificar que:
+   - La selección de icono en la ventana de configuración funciona correctamente
+   - El icono se guarda en la base de datos
+   - Al crear un ticket, se utiliza el icono configurado (o el logo como alternativa)
+
+El código completo del método crearTicket corregido está disponible en el archivo:
+c:\Users\danie\OneDrive\Documentos\NetBeansProjects\tikets\src\main\java\com\mycompany\tikets\view\crearTicket_fixed.java

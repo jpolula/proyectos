@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f2f5; }
+        .header { background: #2c3e50; color: white; padding: 1rem; text-align: center; }
+        .container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; padding: 1rem; }
+        .panel { background: white; padding: 1rem; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .estadisticas { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+        .stat-card { background: #ecf0f1; padding: 1rem; border-radius: 5px; text-align: center; }
+        .stat-number { font-size: 2rem; color: #2980b9; }
+        .menu-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-bottom: 1px solid #eee; }
+        .empleado { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-bottom: 1px solid #eee; }
+        .btn { background: #3498db; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; }
+        .btn-danger { background: #e74c3c; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Panel de Administración</h1>
+    </div>
+
+    <div class="container">
+        <div class="panel">
+            <h2>Estadísticas del Día</h2>
+            <div class="estadisticas">
+                <div class="stat-card">
+                    <div class="stat-number">45</div>
+                    <div>Pedidos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">€850</div>
+                    <div>Ventas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">12</div>
+                    <div>Mesas Atendidas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">15min</div>
+                    <div>Tiempo Medio</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Gestión del Menú</h2>
+            <div class="menu-item">
+                <span>Paella Valenciana</span>
+                <div>
+                    <span>15.00€</span>
+                    <button class="btn">Editar</button>
+                </div>
+            </div>
+            <div class="menu-item">
+                <span>Solomillo</span>
+                <div>
+                    <span>22.00€</span>
+                    <button class="btn">Editar</button>
+                </div>
+            </div>
+            <button class="btn" style="margin-top: 1rem;">Añadir Plato</button>
+        </div>
+
+        <div class="panel">
+            <h2>Empleados</h2>
+            <div class="empleado">
+                <span>Juan García - Camarero</span>
+                <button class="btn">Gestionar</button>
+            </div>
+            <div class="empleado">
+                <span>María López - Cocinera</span>
+                <button class="btn">Gestionar</button>
+            </div>
+            <button class="btn" style="margin-top: 1rem;">Añadir Empleado</button>
+        </div>
+
+        <div class="panel">
+            <h2>Configuración</h2>
+            <div style="margin-bottom: 1rem;">
+                <label>Tiempo máximo de preparación:</label>
+                <input type="number" value="30" style="margin-left: 1rem;"> min
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label>Notificaciones por email:</label>
+                <input type="checkbox" checked style="margin-left: 1rem;">
+            </div>
+            <button class="btn">Guardar Cambios</button>
+        </div>
+    </div>
+</body>
+</html>

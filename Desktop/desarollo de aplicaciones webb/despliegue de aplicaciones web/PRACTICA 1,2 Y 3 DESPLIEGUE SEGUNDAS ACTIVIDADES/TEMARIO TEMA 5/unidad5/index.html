@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+<head>
+<link rel="stylesheet" type="text/css" href="base.css" />
+<link rel="stylesheet" type="text/css" href="content.css" />
+<link rel="stylesheet" type="text/css" href="nav.css" />
+<meta http-equiv="content-type" content="text/html;  charset=utf-8" />
+<title>MODULO 5 </title>
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+<meta name="author" content="JAVI" />
+<link rel="license" type="text/html" href="http://creativecommons.org/licenses/by-sa/4.0/" />
+<meta name="generator" content="eXeLearning 2.8.1 - exelearning.net" />
+<meta name="description" content="MODULO 5" />
+<!--[if lt IE 9]><script type="text/javascript" src="exe_html5.js"></script><![endif]-->
+<script type="text/javascript" src="exe_jquery.js"></script>
+<script type="text/javascript" src="common_i18n.js"></script>
+<script type="text/javascript" src="common.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body class="exe-web-site" id="exe-node-0"><script type="text/javascript">document.body.className+=" js"</script>
+<div id="content">
+<p id="skipNav"><a href="#main" class="sr-av">Saltar la navegación</a></p>
+<header id="header" ><div id="headerContent">MODULO 5</div></header>
+<nav id="siteNav">
+<ul>
+   <li id="active"><a href="index.html" class="active daddy main-node">Despliegues: Deployments</a></li>
+   <li><a href="describiendo_un_deployment.html" class="no-ch">Describiendo un Deployment</a></li>
+   <li><a href="gestin_bsica_de_un_deployment.html" class="no-ch">Gestión básica de un Deployment</a></li>
+   <li><a href="actualizacin_y_desactualizacin_de_un_deployment.html" class="no-ch">Actualización y desactualización de un Deployment</a></li>
+   <li><a href="crditos.html" class="no-ch">Créditos</a></li>
+</ul>
+</nav>
+<div id='topPagination'>
+<nav class="pagination noprt">
+<a href="describiendo_un_deployment.html" class="next"><span>Siguiente<span> &raquo;</span></span></a>
+</nav>
+</div>
+<div id="main-wrapper">
+<section id="main">
+<header id="nodeDecoration"><h1 id="nodeTitle">Despliegues: Deployments</h1></header>
+<article class="iDevice_wrapper textIdevice" id="id0">
+<div class="iDevice emphasis0" >
+<div id="ta0_123_2" class="block iDevice_content">
+<div class="exe-text"><p>El despliegue o <a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/" rel="nofollow">Deployment</a> es la unidad de más alto nivel que podemos gestionar en Kubernetes.</p>
+<p>En los módulos anteriores hemos estudiado los Pods y los ReplicaSet, sin embargo, cuando queramos desplegar una aplicación en Kubernetes no vamos a gestionar éstos directamente, sino que vamos a crear un recurso de tipo Deployment. ¿Qué ocurre cuando creamos un nuevo recurso Deployment?</p>
+<ul>
+<li>La creación de un Deployment conlleva la creación de un ReplicaSet que controlará un conjunto de Pods creados a partir de la versión de la imagen que se ha indicado.</li>
+<li>Si hemos desarrollado una nueva versión de la aplicación y hemos creado una nueva imagen con la nueva versión, podemos modificar el Deployment indicando la nueva versión de la imagen. En ese momento se creará un nuevo ReplicaSet que controlará un nuevo conjunto de Pods creados a partir de la nueva versión de la imagen (habremos desplegado una nueva versión de la aplicación).</li>
+<li>Por lo tanto podemos decir que un Deployment va guardando un historial con los ReplicaSet que se van creando al ir cambiado la versión de la imagen. El ReplicaSet que esté activo en un determinado momento será el responsable de crear los Pods con la versión actual de la aplicación.</li>
+<li>Si tenemos un historial de ReplicaSet según las distintas versiones de la imagen que estamos utilizando, podemos, de una manera sencilla, volver a una versión anterior de la aplicación (<strong>Rollback</strong>).</li>
+</ul>
+<p>Por la manera de trabajar de un Deployment, podemos indicar las funciones que nos aporta:</p>
+<ul>
+<li>Control de réplicas</li>
+<li>Escalabilidad de pods</li>
+<li>Actualizaciones continuas</li>
+<li>Despliegues automáticos</li>
+<li>Rollback a versiones anteriores</li>
+</ul>
+<h2><a id="user-content-arquitectura-de-nuestras-aplicaciones" class="anchor" aria-hidden="true" href="https://github.com/iesgn/curso_kubernetes_cep/blob/main/modulo5/deployment.md#arquitectura-de-nuestras-aplicaciones"><svg class="octicon octicon-link" viewbox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"></svg></a></h2>
+<h2>Arquitectura de nuestras aplicaciones</h2>
+<p>Tenemos dos clases de aplicaciones que podemos desplegar en un cluster de Kubernetes:</p>
+<ol>
+<li>Aplicaciones que necesitan varios servicios para ejecutarse: por ejemplo una aplicación escrita en PHP y servida por un servidor web que necesita un servidor de base de datos para guardar la información. En este caso crearemos dos recursos Deployment: uno para desplegar la aplicación PHP y otro para desplegar la base de datos. Por cada servicio que necesite nuestra aplicación crearemos un Deployment para desplegarlo.</li>
+<li>Aplicaciones construidas con microservicios: cada microservicio se puede desplegar de manera autónoma. Por cada microservicio que forma parte de la aplicación crearemos un recurso Deployment. Por ejemplo, una aplicación que tenga un frontend para ofrecer la información y que haga llamadas a un backend que ofrece un servicio web por medio de una API RESTful.</li>
+</ol></div>
+</div>
+</div>
+</article>
+<div id="packageLicense" class="cc cc-by-sa">
+<p><span>Obra publicada con</span> <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Licencia Creative Commons Reconocimiento Compartir igual 4.0</a></p>
+</div>
+</section>
+</div>
+<div id='bottomPagination'>
+<nav class="pagination noprt">
+<a href="describiendo_un_deployment.html" class="next"><span>Siguiente<span> &raquo;</span></span></a>
+</nav>
+</div>
+</div>
+<p id="made-with-eXe"><a href="https://exelearning.net/" target="_blank" rel="noopener"><span>Creado con eXeLearning<span> (Ventana nueva)</span></span></a></p><script type="text/javascript" src="_intef_js.js"></script></body></html>

@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="es">
+<head>
+<link rel="stylesheet" type="text/css" href="base.css" />
+<link rel="stylesheet" type="text/css" href="content.css" />
+<link rel="stylesheet" type="text/css" href="nav.css" />
+<meta http-equiv="content-type" content="text/html;  charset=utf-8" />
+<title>Ejemplo: Despliegue de un cluster de MySQL | MODULO 9 </title>
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+<meta name="author" content="JAVI" />
+<link rel="license" type="text/html" href="http://creativecommons.org/licenses/by-sa/4.0/" />
+<meta name="generator" content="eXeLearning 2.8.1 - exelearning.net" />
+<!--[if lt IE 9]><script type="text/javascript" src="exe_html5.js"></script><![endif]-->
+<script type="text/javascript" src="exe_jquery.js"></script>
+<script type="text/javascript" src="common_i18n.js"></script>
+<script type="text/javascript" src="common.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body class="exe-web-site" id="exe-node-2"><script type="text/javascript">document.body.className+=" js"</script>
+<div id="content">
+<p id="skipNav"><a href="#main" class="sr-av">Saltar la navegación</a></p>
+<header id="header" ><div id="headerContent">MODULO 9</div></header>
+<nav id="siteNav">
+<ul>
+   <li><a href="index.html" class="daddy main-node">Otras cargas de trabajo</a></li>
+   <li><a href="statefulsets.html" class="no-ch">StatefulSets</a></li>
+   <li id="active"><a href="ejemplo_despliegue_de_un_cluster_de_mysql.html" class="active no-ch">Ejemplo: Despliegue de un cluster de MySQL</a></li>
+   <li><a href="daemonsets.html" class="no-ch">DaemonSets</a></li>
+   <li><a href="jobs_y_cronjobs.html" class="no-ch">Jobs y CronJobs</a></li>
+   <li><a href="crditos.html" class="no-ch">Créditos</a></li>
+</ul>
+</nav>
+<div id='topPagination'>
+<nav class="pagination noprt">
+<a href="statefulsets.html" class="prev"><span><span>&laquo; </span>Anterior</span></a> <span class="sep">| </span><a href="daemonsets.html" class="next"><span>Siguiente<span> &raquo;</span></span></a>
+</nav>
+</div>
+<div id="main-wrapper">
+<section id="main">
+<header id="nodeDecoration"><h1 id="nodeTitle">Ejemplo: Despliegue de un cluster de MySQL</h1></header>
+<article class="iDevice_wrapper textIdevice" id="id2">
+<div class="iDevice emphasis0" >
+<div id="ta2_152_2" class="block iDevice_content">
+<div class="exe-text"><p>Una base de datos relacional es un ejemplo perfecto de aplicación con estado, cualquier petición puede depender del estado resultante de una petición anterior, y todas las peticiones deben consultar o modificar la base de datos que incluya la última modificación realizada. Las implicaciones que tiene esto si queremos desplegar la base de datos sobre Kubernetes son importantes, ya que será necesario que la base de datos se pueda desplegar en un cluster para proporcionar disponibilidad, se pueda adaptar a variaciones de demanda y no haya interrupciones, mientras que hay que garantizar que todos los pods accedan a la base de datos de forma coherente.</p>
+<ul>
+<li>¿Podemos utilizar un Deployment con réplicas indistinguibles que se crean o destruyen a demanda?</li>
+<li>¿Necesitamos un volumen adicional para almacenar localmente la base de datos en cada pod?</li>
+<li>¿Cómo garantizamos la replicación de la base de datos entre los nodos?</li>
+</ul>
+<p>Hay diferentes formas de afrontar esto y dependen mucho de las características de la base de datos en cuestión. En este ejemplo vamos a desplegar un cluster de MySQL con un nodo primario (también denominado <em>master</em>) en modo lectura y escritura (se podrán hacer consultas y modificaciones de la base de datos) y varios nodos secundarios en modo lectura (sólo se utilizarán para realizar consultas). Utilizaremos para ello un StatefulSet, en el que los diferentes pods son distinguibles entre sí, tienen siempre el mismo nombre DNS interno y el mismo volumen se conecta siempre al mismo pod. El primer nodo que se desplegará será el primario, con un volumen asociado para la base de datos, el resto de nodos se arrancarán después del primario y al iniciarse sincronizarán la base de datos con la del primario y la almacenarán también en un volumen diferente para cada Pod.</p>
+<p>Este ejemplo es probablemente el más avanzado de todo el curso y utilizaremos además otros recursos como ConfigMap, Services o volúmenes. Este ejemplo está extraído directamente de la documentación de k8s: <a href="https://kubernetes.io/docs/tasks/run-application/run-replicated-stateful-application/" rel="nofollow">Run a Replicated Stateful Application</a>.</p></div>
+</div>
+</div>
+</article>
+<article class="iDevice_wrapper textIdevice em_iDevice em_iDevice_caso" id="id3">
+<div class="iDevice emphasis1" >
+<header class="iDevice_header"><h1 class="iDeviceTitle">Nota</h1></header>
+<div class="iDevice_inner">
+<div class="iDevice_content_wrapper">
+<div id="ta3_153_2" class="block iDevice_content">
+<div class="exe-text"><p><strong>Nota</strong> Las características de este cluster no son para poner en producción, ya que se ha simplificado la configuración de MySQL, para centrarnos en los aspectos relacionados con Kubernetes.</p></div>
+</div>
+</div>
+</div>
+</div>
+</article>
+<article class="iDevice_wrapper textIdevice em_iDevice em_iDevice_caso" id="id5">
+<div class="iDevice emphasis1" >
+<header class="iDevice_header"><h1 class="iDeviceTitle">Nota</h1></header>
+<div class="iDevice_inner">
+<div class="iDevice_content_wrapper">
+<div id="ta5_155_2" class="block iDevice_content">
+<div class="exe-text"><p><strong>Nota</strong> En caso de no tener recursos suficientes para realizar este ejemplo, se puede reducir el número de réplicas a dos, o bien eliminar el cluster y volverlo a crear con suficientes recursos (en el ejemplo siguiente creamos un nuevo cluster de k8s con 6 GiB de RAM y 4 cores virtuales:</p>
+<div class="snippet-clipboard-content position-relative">
+<pre><code>minikube stop
+minikube delete
+minikube start --driver ... --memory 6144 --cpus 4
+</code></pre>
+</div></div>
+</div>
+</div>
+</div>
+</div>
+</article>
+<article class="iDevice_wrapper textIdevice" id="id6">
+<div class="iDevice emphasis0" >
+<div id="ta6_156_2" class="block iDevice_content">
+<div class="exe-text"><p>Vamos pues con la creación de este cluster, para lo que utilizaremos diferentes objetos de Kubernetes que hemos visto durante todo el curso.</p>
+<p>Creamos un ConfigMap para modificar el fichero de configuración de MySQL, de manera que el primario genere los registros para la sincronización y los secundarios actúen en modo lectura: <a href="configmap.yaml">configmap.yaml</a></p>
+<div class="highlight highlight-source-yaml position-relative">
+<pre><span class="pl-ent">apiVersion</span>: <span class="pl-c1">v1</span>
+<span class="pl-ent">kind</span>: <span class="pl-s">ConfigMap</span>
+<span class="pl-ent">metadata</span>:
+  <span class="pl-ent">name</span>: <span class="pl-s">mysql</span>
+  <span class="pl-ent">labels</span>:
+    <span class="pl-ent">app</span>: <span class="pl-s">mysql</span>
+<span class="pl-ent">data</span>:
+  <span class="pl-ent">primary.cnf</span>: <span class="pl-s">|</span>
+<span class="pl-s">    # Modificación del primario</span>
+<span class="pl-s">    [mysqld]</span>
+<span class="pl-s">    log-bin</span>
+<span class="pl-s"></span>  <span class="pl-ent">replica.cnf</span>: <span class="pl-s">|</span>
+<span class="pl-s">    # Modificación de los secundarios</span>
+<span class="pl-s">    [mysqld]</span>
+<span class="pl-s">    super-read-only</span></pre>
+</div>
+<div class="snippet-clipboard-content position-relative">
+<pre><code>kubectl apply -f configmap.yaml
+</code></pre>
+</div>
+<p>Creamos dos servicios, uno de tipo Headless asociado con el StatefulSet para gestionar los nombres internos de los pods y otro para balancear entre los diferentes pods secundarios las peticiones de lectura: <a href="servicios.yaml">servicios.yaml</a></p>
+<div class="highlight highlight-source-yaml position-relative">
+<pre><span class="pl-c"># Servicio para usar los nombres DNS internamente</span>
+<span class="pl-ent">apiVersion</span>: <span class="pl-c1">v1</span>
+<span class="pl-ent">kind</span>: <span class="pl-s">Service</span>
+<span class="pl-ent">metadata</span>:
+  <span class="pl-ent">name</span>: <span class="pl-s">mysql</span>
+  <span class="pl-ent">labels</span>:
+    <span class="pl-ent">app</span>: <span class="pl-s">mysql</span>
+<span class="pl-ent">spec</span>:
+  <span class="pl-ent">ports</span>:
+  - <span class="pl-ent">name</span>: <span class="pl-s">mysql</span>
+    <span class="pl-ent">port</span>: <span class="pl-c1">3306</span>
+  <span class="pl-ent">clusterIP</span>: <span class="pl-s">None</span>
+  <span class="pl-ent">selector</span>:
+    <span class="pl-ent">app</span>: <span class="pl-s">mysql</span>
+---
+<span class="pl-c"># Servicio para balancear los clientes entre los nodos secundarios</span>
+<span class="pl-c"># en modo lectura</span>
+<span class="pl-ent">apiVersion</span>: <span class="pl-c1">v1</span>
+<span class="pl-ent">kind</span>: <span class="pl-s">Service</span>
+<span class="pl-ent">metadata</span>:
+  <span class="pl-ent">name</span>: <span class="pl-s">mysql-read</span>
+  <span class="pl-ent">labels</span>:
+    <span class="pl-ent">app</span>: <span class="pl-s">mysql</span>
+<span class="pl-ent">spec</span>:
+  <span class="pl-ent">ports</span>:
+  - <span class="pl-ent">name</span>: <span class="pl-s">mysql</span>
+    <span class="pl-ent">port</span>: <span class="pl-c1">3306</span>
+  <span class="pl-ent">selector</span>:
+    <span class="pl-ent">app</span>: <span class="pl-s">mysql</span></pre>
+</div>
+<div class="snippet-clipboard-content position-relative">
+<pre><code>kubectl apply -f servicios.yaml
+</code></pre>
+</div>
+<p>Y ya por último creamos el StatefulSet, que en este caso es el objeto más complicado que vamos a ver en este curso. Veamos los elementos que utiliza:</p>
+<ul>
+<li>
+<p>Está formado inicialmente por tres pods, de los que en el primero se ejecutará el servidor MySQL primario y en los otros dos los servidores MySQL secundarios.</p>
+</li>
+<li>
+<p>Se define un volumen de 10 GiB para cada pod a través de un volumeClaim.</p>
+</li>
+<li>
+<p>Utiliza dos contenedores en cada pod, el principal que se encarga de ejecutar el proceso mysql y uno adicional que se encarga de la sincronización de la base de datos mediante <a href="https://www.percona.com/software/mysql-database/percona-xtrabackup" rel="nofollow">XtraBackup</a>. Ambos contenedores deben poder acceder al mismo volumen en el que se encuentra la base de datos, en el punto de montaje <code>/var/lib/mysql</code>.</p>
+</li>
+<li>
+<p>Utiliza <a href="https://kubernetes.io/docs/concepts/workloads/pods/init-containers/" rel="nofollow">InitContainers</a> que no hemos visto en el curso; estos contenedores se ejecutan dentro del pod antes del contenedor normal y se utilizan para realizar configuraciones o modificaciones previas a la utilización del contenedor que va a ejecutar la aplicación. Una vez que el InitContainer ha finalizado se lanza el contenedor normal. En este caso se utilizan para la configuración inicial del contenedor mysql mediante un script que se lanza como un comando (si el índice es 0 configura el contenedor como primario y si es otro número, lo hace como secundario). El otro InitContainer se utiliza para clonar inicialmente la base de datos en los secundarios con <code>xtrabackup</code>.</p>
+</li>
+<li>
+<p>Se establece límite de consumo de recursos y se definen las pruebas de disponibilidad para que Kubernetes pueda comprobar si se está ofreciendo el servicio de forma adecuada.</p>
+</li>
+<li>
+<p>Se define el acceso a la base de datos sin contraseña, lo que hace que el sistema no sea válido para un despliegue real.</p>
+</li>
+</ul>
+<p><a href="statefulset.1.yaml">statefulset.yaml</a></p>
+<div class="highlight highlight-source-yaml position-relative">
+<pre><span class="pl-ent">apiVersion</span>: <span class="pl-s">apps/v1</span>
+<span class="pl-ent">kind</span>: <span class="pl-s">StatefulSet</span>
+<span class="pl-ent">metadata</span>:
+  <span class="pl-ent">name</span>: <span class="pl-s">mysql</span>
+<span class="pl-ent">spec</span>:
+  <span class="pl-ent">selector</span>:
+    <span class="pl-ent">matchLabels</span>:
+      <span class="pl-ent">app</span>: <span class="pl-s">mysql</span>
+  <span class="pl-ent">serviceName</span>: <span class="pl-s">mysql</span>
+  <span class="pl-ent">replicas</span>: <span class="pl-c1">3</span>
+  <span class="pl-ent">template</span>:
+    <span class="pl-ent">metadata</span>:
+      <span class="pl-ent">labels</span>:
+        <span class="pl-ent">app</span>: <span class="pl-s">mysql</span>
+    <span class="pl-ent">spec</span>:
+      <span class="pl-ent">initContainers</span>:
+      - <span class="pl-ent">name</span>: <span class="pl-s">init-mysql</span>
+        <span class="pl-ent">image</span>: <span class="pl-s">mysql:5.7</span>
+        <span class="pl-ent">command</span>:
+        - <span class="pl-s">bash</span>
+        - <span class="pl-s"><span class="pl-pds">"</span>-c<span class="pl-pds">"</span></span>
+        - <span class="pl-s">|</span>
+<span class="pl-s">          set -ex</span>
+<span class="pl-s">          # Numera los servidores en función del índice del pod</span>
+<span class="pl-s">          [[ `hostname` =~ -([0-9]+)$ ]] || exit 1</span>
+<span class="pl-s">          ordinal=${BASH_REMATCH[1]}</span>
+<span class="pl-s">          echo [mysqld] &gt; /mnt/conf.d/server-id.cnf</span>
+<span class="pl-s">          # Establece el número del servidor a partir de 100</span>
+<span class="pl-s">          echo server-id=$((100 + $ordinal)) &gt;&gt; /mnt/conf.d/server-id.cnf</span>
+<span class="pl-s">          # Modifica MySQL con el ConfigMap en función de si es el primario (0) o no</span>
+<span class="pl-s">          if [[ $ordinal -eq 0 ]]; then</span>
+<span class="pl-s">            cp /mnt/config-map/primary.cnf /mnt/conf.d/</span>
+<span class="pl-s">          else</span>
+<span class="pl-s">            cp /mnt/config-map/replica.cnf /mnt/conf.d/</span>
+<span class="pl-s">          fi</span>
+<span class="pl-s"></span>        <span class="pl-ent">volumeMounts</span>:
+        - <span class="pl-ent">name</span>: <span class="pl-s">conf</span>
+          <span class="pl-ent">mountPath</span>: <span class="pl-s">/mnt/conf.d</span>
+        - <span class="pl-ent">name</span>: <span class="pl-s">config-map</span>
+          <span class="pl-ent">mountPath</span>: <span class="pl-s">/mnt/config-map</span>
+      - <span class="pl-ent">name</span>: <span class="pl-s">clone-mysql</span>
+        <span class="pl-ent">image</span>: <span class="pl-s">gcr.io/google-samples/xtrabackup:1.0</span>
+        <span class="pl-ent">command</span>:
+        - <span class="pl-s">bash</span>
+        - <span class="pl-s"><span class="pl-pds">"</span>-c<span class="pl-pds">"</span></span>
+        - <span class="pl-s">|</span>
+<span class="pl-s">          set -ex</span>
+<span class="pl-s">          # No clona si ya existen datos.</span>
+<span class="pl-s">          [[ -d /var/lib/mysql/mysql ]] &amp;&amp; exit 0</span>
+<span class="pl-s">          # No clona si se trata del primario.</span>
+<span class="pl-s">          [[ `hostname` =~ -([0-9]+)$ ]] || exit 1</span>
+<span class="pl-s">          ordinal=${BASH_REMATCH[1]}</span>
+<span class="pl-s">          [[ $ordinal -eq 0 ]] &amp;&amp; exit 0</span>
+<span class="pl-s">          # Clona los datos del pod inmediatamente anterior</span>
+<span class="pl-s">          ncat --recv-only mysql-$(($ordinal-1)).mysql 3307 | xbstream -x -C /var/lib/mysql</span>
+<span class="pl-s">          # Prepara la copia de seguridad</span>
+<span class="pl-s">          xtrabackup --prepare --target-dir=/var/lib/mysql</span>
+<span class="pl-s"></span>        <span class="pl-ent">volumeMounts</span>:
+        - <span class="pl-ent">name</span>: <span class="pl-s">data</span>
+          <span class="pl-ent">mountPath</span>: <span class="pl-s">/var/lib/mysql</span>
+          <span class="pl-ent">subPath</span>: <span class="pl-s">mysql</span>
+        - <span class="pl-ent">name</span>: <span class="pl-s">conf</span>
+          <span class="pl-ent">mountPath</span>: <span class="pl-s">/etc/mysql/conf.d</span>
+      <span class="pl-ent">containers</span>:
+      - <span class="pl-ent">name</span>: <span class="pl-s">mysql</span>
+        <span class="pl-ent">image</span>: <span class="pl-s">mysql:5.7</span>
+        <span class="pl-ent">env</span>:
+        - <span class="pl-ent">name</span>: <span class="pl-s">MYSQL_ALLOW_EMPTY_PASSWORD</span>
+          <span class="pl-ent">value</span>: <span class="pl-s"><span class="pl-pds">"</span>1<span class="pl-pds">"</span></span>
+        <span class="pl-ent">ports</span>:
+        - <span class="pl-ent">name</span>: <span class="pl-s">mysql</span>
+          <span class="pl-ent">containerPort</span>: <span class="pl-c1">3306</span>
+        <span class="pl-ent">volumeMounts</span>:
+        - <span class="pl-ent">name</span>: <span class="pl-s">data</span>
+          <span class="pl-ent">mountPath</span>: <span class="pl-s">/var/lib/mysql</span>
+          <span class="pl-ent">subPath</span>: <span class="pl-s">mysql</span>
+        - <span class="pl-ent">name</span>: <span class="pl-s">conf</span>
+          <span class="pl-ent">mountPath</span>: <span class="pl-s">/etc/mysql/conf.d</span>
+        <span class="pl-ent">resources</span>:
+          <span class="pl-ent">requests</span>:
+            <span class="pl-ent">cpu</span>: 2<span class="pl-c1">00m</span>
+            <span class="pl-ent">memory</span>: <span class="pl-s">1Gi</span>
+        <span class="pl-ent">livenessProbe</span>:
+          <span class="pl-ent">exec</span>:
+            <span class="pl-ent">command</span>: <span class="pl-s">["mysqladmin", "ping"]</span>
+          <span class="pl-ent">initialDelaySeconds</span>: <span class="pl-c1">30</span>
+          <span class="pl-ent">periodSeconds</span>: <span class="pl-c1">10</span>
+          <span class="pl-ent">timeoutSeconds</span>: <span class="pl-c1">5</span>
+        <span class="pl-ent">readinessProbe</span>:
+          <span class="pl-ent">exec</span>:
+            <span class="pl-c"># Comprueba si se pueden hacer consultas sobre TCP</span>
+            <span class="pl-ent">command</span>: <span class="pl-s">["mysql", "-h", "127.0.0.1", "-e", "SELECT 1"]</span>
+          <span class="pl-ent">initialDelaySeconds</span>: <span class="pl-c1">5</span>
+          <span class="pl-ent">periodSeconds</span>: <span class="pl-c1">2</span>
+          <span class="pl-ent">timeoutSeconds</span>: <span class="pl-c1">1</span>
+      - <span class="pl-ent">name</span>: <span class="pl-s">xtrabackup</span>
+        <span class="pl-ent">image</span>: <span class="pl-s">gcr.io/google-samples/xtrabackup:1.0</span>
+        <span class="pl-ent">ports</span>:
+        - <span class="pl-ent">name</span>: <span class="pl-s">xtrabackup</span>
+          <span class="pl-ent">containerPort</span>: <span class="pl-c1">3307</span>
+        <span class="pl-ent">command</span>:
+        - <span class="pl-s">bash</span>
+        - <span class="pl-s"><span class="pl-pds">"</span>-c<span class="pl-pds">"</span></span>
+        - <span class="pl-s">|</span>
+<span class="pl-s">          set -ex</span>
+<span class="pl-s">          cd /var/lib/mysql</span>
+<span class="pl-s"></span>
+<span class="pl-s">          # Determina la posición de log a clonar.</span>
+<span class="pl-s">          if [[ -f xtrabackup_slave_info &amp;&amp; "x$(&lt;xtrabackup_slave_info)" != "x" ]]; then</span>
+<span class="pl-s">            # Modificaciones previas</span>
+<span class="pl-s">            cat xtrabackup_slave_info | sed -E 's/;$//g' &gt; change_master_to.sql.in</span>
+<span class="pl-s">            rm -f xtrabackup_slave_info xtrabackup_binlog_info</span>
+<span class="pl-s">          elif [[ -f xtrabackup_binlog_info ]]; then</span>
+<span class="pl-s">            # Si existe xtrabackup_binlog_info, estamos clonando desde el primario</span>
+<span class="pl-s">            [[ `cat xtrabackup_binlog_info` =~ ^(.*?)[[:space:]]+(.*?)$ ]] || exit 1</span>
+<span class="pl-s">            rm -f xtrabackup_binlog_info xtrabackup_slave_info</span>
+<span class="pl-s">            echo "CHANGE MASTER TO MASTER_LOG_FILE='${BASH_REMATCH[1]}',\</span>
+<span class="pl-s">                  MASTER_LOG_POS=${BASH_REMATCH[2]}" &gt; change_master_to.sql.in</span>
+<span class="pl-s">          fi</span>
+<span class="pl-s"></span>
+<span class="pl-s">          # Se comprueba si es necesaria completar un clon iniciando la replicación.</span>
+<span class="pl-s">          if [[ -f change_master_to.sql.in ]]; then</span>
+<span class="pl-s">            echo "Esperando a que mysqld esté disponible"</span>
+<span class="pl-s">            until mysql -h 127.0.0.1 -e "SELECT 1"; do sleep 1; done</span>
+<span class="pl-s"></span>
+<span class="pl-s">            echo "Inicializando la réplica desde la última modificación"</span>
+<span class="pl-s">            mysql -h 127.0.0.1 \</span>
+<span class="pl-s">                  -e "$(&lt;change_master_to.sql.in), \</span>
+<span class="pl-s">                          MASTER_HOST='mysql-0.mysql', \</span>
+<span class="pl-s">                          MASTER_USER='root', \</span>
+<span class="pl-s">                          MASTER_PASSWORD='', \</span>
+<span class="pl-s">                          MASTER_CONNECT_RETRY=10; \</span>
+<span class="pl-s">                        START SLAVE;" || exit 1</span>
+<span class="pl-s">            # En caso de que el contenedor se reinicie, se intenta de nuevo.</span>
+<span class="pl-s">            mv change_master_to.sql.in change_master_to.sql.orig</span>
+<span class="pl-s">          fi</span>
+<span class="pl-s"></span>
+<span class="pl-s">          # Lanza un servidor que pueda mandar copias solicitadas por otros.</span>
+<span class="pl-s">          exec ncat --listen --keep-open --send-only --max-conns=1 3307 -c \</span>
+<span class="pl-s">            "xtrabackup --backup --slave-info --stream=xbstream --host=127.0.0.1 --user=root"</span>
+<span class="pl-s"></span>        <span class="pl-ent">volumeMounts</span>:
+        - <span class="pl-ent">name</span>: <span class="pl-s">data</span>
+          <span class="pl-ent">mountPath</span>: <span class="pl-s">/var/lib/mysql</span>
+          <span class="pl-ent">subPath</span>: <span class="pl-s">mysql</span>
+        - <span class="pl-ent">name</span>: <span class="pl-s">conf</span>
+          <span class="pl-ent">mountPath</span>: <span class="pl-s">/etc/mysql/conf.d</span>
+        <span class="pl-ent">resources</span>:
+          <span class="pl-ent">requests</span>:
+            <span class="pl-ent">cpu</span>: <span class="pl-c1">100m</span>
+            <span class="pl-ent">memory</span>: <span class="pl-s">100Mi</span>
+      <span class="pl-ent">volumes</span>:
+      - <span class="pl-ent">name</span>: <span class="pl-s">conf</span>
+        <span class="pl-ent">emptyDir</span>: <span class="pl-s">{}</span>
+      - <span class="pl-ent">name</span>: <span class="pl-s">config-map</span>
+        <span class="pl-ent">configMap</span>:
+          <span class="pl-ent">name</span>: <span class="pl-s">mysql</span>
+  <span class="pl-ent">volumeClaimTemplates</span>:
+  - <span class="pl-ent">metadata</span>:
+      <span class="pl-ent">name</span>: <span class="pl-s">data</span>
+    <span class="pl-ent">spec</span>:
+      <span class="pl-ent">accessModes</span>: <span class="pl-s">["ReadWriteOnce"]</span>
+      <span class="pl-ent">resources</span>:
+        <span class="pl-ent">requests</span>:
+          <span class="pl-ent">storage</span>: <span class="pl-s">10Gi</span></pre>
+</div>
+<div class="snippet-clipboard-content position-relative">
+<pre><code>kubectl apply -f statefulset.yaml
+</code></pre>
+</div>
+<p>Podemos ir comprobando con <code>kubectl</code> cómo se van creando los diferentes pods y contenedores, tanto los InitContainers como los contenedores de cada pod y al tratarse de un StatefulSet, los pods no se crean en paralelo, lo hacen de manera secuencial (algo fundamental en este caso, ya que hasta que no ha terminado el primer pod que contiene el contendor primario, no deben lanzarse los secundarios).</p>
+<h2>Prueba de funcionamiento de la base de datos</h2>
+<div class="snippet-clipboard-content position-relative">
+<pre><code></code></pre>
+<p>Creamos un pod efímero con un cliente de MySQL para crear una tabla con un registro en el pod mysql-0 (con nombre DNS mysql-0.mysql):</p>
+<pre><code></code></pre>
+<div class="snippet-clipboard-content position-relative">
+<pre><code>kubectl run mysql-client --image=mysql:5.7 -i --rm --restart=Never --\
+  mysql -h mysql-0.mysql &lt;&lt;EOF
+CREATE DATABASE prueba;
+CREATE TABLE prueba.saludos (mensaje VARCHAR(250));
+INSERT INTO prueba.saludos VALUES ('Bienvenidos al curso del CEP de k8s');
+EOF
+</code></pre>
+</div>
+<pre><code></code></pre>
+<p>Una vez realizada la modificación en la base de datos, se eliminará el pod con el cliente MySQL. Creamos a continuación otro pod que realizará una consulta a la base de datos, pero lo hará a <code>mysql-read</code> con lo que comprobaremos que se ha realizado la sincronización a los secundarios:</p>
+<pre><code></code></pre>
+<div class="snippet-clipboard-content position-relative">
+<pre><code>kubectl run mysql-client --image=mysql:5.7 -i -t --rm --restart=Never --\
+  mysql -h mysql-read -e "SELECT * FROM prueba.saludos"
+</code></pre>
+</div>
+<pre><code></code></pre>
+<p>Podemos comprobar los servidores que responden a una consulta a <code>mysql-read</code> solicitando el identificador del servidor en unas cuantas iteraciones, para lo que ejecutamos de forma interactiva una consulta repetidas veces para que se muestre el id del servidor que está respondiendo y así se vea el balanceo sobre todos los nodos:</p>
+<pre><code></code></pre>
+<div class="highlight highlight-source-shell position-relative">
+<pre>kubectl run mysql-client-loop --image=mysql:5.7 bash</pre>
+</div>
+<pre><code></code></pre>
+<div class="highlight highlight-source-shell position-relative">
+<pre><span class="pl-k">for</span> <span class="pl-smi">i</span> <span class="pl-k">in</span> <span class="pl-s"><span class="pl-pds">`</span>seq 1 10<span class="pl-pds">`</span></span><span class="pl-k">;</span> <span class="pl-k">do</span> mysql -h mysql-read -e <span class="pl-s"><span class="pl-pds">'</span>SELECT @@server_id,NOW()<span class="pl-pds">'</span></span><span class="pl-k">;</span> sleep 1<span class="pl-k">;</span> done<span class="pl-s"><span class="pl-pds">"</span></span></pre>
+</div>
+<pre><code></code></pre>
+</div></div>
+</div>
+</div>
+</article>
+<article class="iDevice_wrapper textIdevice em_iDevice em_iDevice_reproduccion" id="id15">
+<div class="iDevice emphasis1" >
+<header class="iDevice_header"><h1 class="iDeviceTitle">Vídeo: Ejemplo: Despliegue de un cluster de MySQL</h1></header>
+<div class="iDevice_inner">
+<div class="iDevice_content_wrapper">
+<div id="ta15_152_2" class="block iDevice_content">
+<div class="exe-text"><figure class="exe-figure exe-media position-center" style="width: 800px;"><iframe width="800" height="449" src="https://www.youtube.com/embed/aUH2x9WtJZM" allowfullscreen="allowfullscreen" data-mce-fragment="1"></iframe>
+<figcaption class="figcaption"><span class="title"><em>Vídeo: Ejemplo: Despliegue de un cluster de MySQL</em></span></figcaption>
+</figure>
+<p></p></div>
+</div>
+</div>
+</div>
+</div>
+</article>
+<div id="packageLicense" class="cc cc-by-sa">
+<p><span>Obra publicada con</span> <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Licencia Creative Commons Reconocimiento Compartir igual 4.0</a></p>
+</div>
+</section>
+</div>
+<div id='bottomPagination'>
+<nav class="pagination noprt">
+<a href="statefulsets.html" class="prev"><span><span>&laquo; </span>Anterior</span></a> <span class="sep">| </span><a href="daemonsets.html" class="next"><span>Siguiente<span> &raquo;</span></span></a>
+</nav>
+</div>
+</div>
+<p id="made-with-eXe"><a href="https://exelearning.net/" target="_blank" rel="noopener"><span>Creado con eXeLearning<span> (Ventana nueva)</span></span></a></p><script type="text/javascript" src="_intef_js.js"></script></body></html>

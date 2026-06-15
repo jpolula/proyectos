@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="es">
+<head>
+<link rel="stylesheet" type="text/css" href="base.css" />
+<link rel="stylesheet" type="text/css" href="content.css" />
+<link rel="stylesheet" type="text/css" href="nav.css" />
+<meta http-equiv="content-type" content="text/html;  charset=utf-8" />
+<title>ConfigMaps | MODULO 7 </title>
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+<meta name="author" content="JAVI" />
+<link rel="license" type="text/html" href="http://creativecommons.org/licenses/by-sa/4.0/" />
+<meta name="generator" content="eXeLearning 2.8.1 - exelearning.net" />
+<!--[if lt IE 9]><script type="text/javascript" src="exe_html5.js"></script><![endif]-->
+<script type="text/javascript" src="exe_jquery.js"></script>
+<script type="text/javascript" src="common_i18n.js"></script>
+<script type="text/javascript" src="common.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body class="exe-web-site" id="exe-node-2"><script type="text/javascript">document.body.className+=" js"</script>
+<div id="content">
+<p id="skipNav"><a href="#main" class="sr-av">Saltar la navegación</a></p>
+<header id="header" ><div id="headerContent">MODULO 7</div></header>
+<nav id="siteNav">
+<ul>
+   <li><a href="index.html" class="daddy main-node">Despliegues parametrizados</a></li>
+   <li><a href="variables_de_entorno.html" class="no-ch">Variables de entorno</a></li>
+   <li id="active"><a href="configmaps.html" class="active no-ch">ConfigMaps</a></li>
+   <li><a href="secrets.html" class="no-ch">Secrets</a></li>
+   <li><a href="ejemplo_completo_despliegue_y_acceso_a_wordpress__mariadb.html" class="no-ch">Ejemplo completo: Despliegue y acceso a Wordpress + MariaDB</a></li>
+   <li><a href="crditos.html" class="no-ch">Créditos</a></li>
+</ul>
+</nav>
+<div id='topPagination'>
+<nav class="pagination noprt">
+<a href="variables_de_entorno.html" class="prev"><span><span>&laquo; </span>Anterior</span></a> <span class="sep">| </span><a href="secrets.html" class="next"><span>Siguiente<span> &raquo;</span></span></a>
+</nav>
+</div>
+<div id="main-wrapper">
+<section id="main">
+<header id="nodeDecoration"><h1 id="nodeTitle">ConfigMaps</h1></header>
+<article class="iDevice_wrapper textIdevice" id="id4">
+<div class="iDevice emphasis0" >
+<div id="ta4_114_2" class="block iDevice_content">
+<div class="exe-text"><p>En el apartado anterior hemos estudiado como podemos definir las variables de entorno de los contenedores que vamos a desplegar. Sin embargo, la solución que presentamos puede tener alguna limitación:</p>
+<ul>
+<li>Los valores de las variables de entorno están escritos directamente en el fichero yaml. Estos ficheros yaml suelen estar en repositorios git y lógicamente no es el sitio más adecuado para ubicarlos.</li>
+<li>Por otro lado, escribiendo los valores de las variables de entorno directamente en los ficheros, hacemos que estos ficheros no sean reutilizables en otros despliegues y que el procedimiento de cambiar las variables sea tedioso y propenso a errores, porque hay que hacerlo en varios sitios.</li>
+</ul>
+<p>Para solucionar estas limitaciones, podemos usar un nuevo recurso de Kubernetes llamado ConfigMap.</p>
+<h2>Configuración de aplicaciones usando ConfigMaps</h2>
+<p><a href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/" rel="nofollow">ConfigMap</a> permite definir un diccionario (clave,valor) para guardar información que se puede utilizar para configurar una aplicación.</p>
+<p>Aunque hay distintas formas de indicar el conjunto de claves-valor de nuestro ConfigMap, en este caso vamos a usar literales, por ejemplo:</p>
+<div class="snippet-clipboard-content position-relative">
+<pre><code>kubectl create cm mariadb --from-literal=root_password=my-password \
+                          --from-literal=mysql_usuario=usuario     \
+                          --from-literal=mysql_password=password-user \
+                          --from-literal=basededatos=test
+</code></pre>
+</div>
+<p>En el ejemplo anteriore, hemos creado un ConfigMap llamado <code>mariadb</code> con cuatro pares clave-valor. Para ver los ConfigMap que tenemos creados, podemos utilizar:</p>
+<div class="snippet-clipboard-content position-relative">
+<pre><code>kubectl get cm
+</code></pre>
+</div>
+<p>Y para ver los detalles del mismo:</p>
+<div class="snippet-clipboard-content position-relative">
+<pre><code>kubectl describe cm mariadb
+</code></pre>
+</div>
+<p>Una vez que creado el ConfigMap se puede crear un despliegue donde las variables de entorno se inicializan con los valores guardados en el ConfigMap. Por ejemplo, un despliegue de una base de datos lo podemos encontrar en el fichero <code><a href="mariadb-deployment-configmap.yaml">mariadb-deployment-configmap.yaml</a></code> y el fragmento donde definimos las variables de entorno quedaría:</p>
+<div class="highlight highlight-source-yaml position-relative">
+<pre>...
+    <span class="pl-ent">spec</span>:
+      <span class="pl-ent">containers</span>:
+        - <span class="pl-ent">name</span>: <span class="pl-s">contenedor-mariadb</span>
+          <span class="pl-ent">image</span>: <span class="pl-s">mariadb</span>
+          <span class="pl-ent">ports</span>:
+            - <span class="pl-ent">containerPort</span>: <span class="pl-c1">3306</span>
+              <span class="pl-ent">name</span>: <span class="pl-s">db-port</span>
+          <span class="pl-ent">env</span>:
+            - <span class="pl-ent">name</span>: <span class="pl-s">MYSQL_ROOT_PASSWORD</span>
+              <span class="pl-ent">valueFrom</span>:
+                <span class="pl-ent">configMapKeyRef</span>:
+                  <span class="pl-ent">name</span>: <span class="pl-s">mariadb</span>
+                  <span class="pl-ent">key</span>: <span class="pl-s">root_password</span>
+            - <span class="pl-ent">name</span>: <span class="pl-s">MYSQL_USER</span>
+              <span class="pl-ent">valueFrom</span>:
+                <span class="pl-ent">configMapKeyRef</span>:
+                  <span class="pl-ent">name</span>: <span class="pl-s">mariadb</span>
+                  <span class="pl-ent">key</span>: <span class="pl-s">mysql_usuario</span>
+            - <span class="pl-ent">name</span>: <span class="pl-s">MYSQL_PASSWORD</span>
+              <span class="pl-ent">valueFrom</span>:
+                <span class="pl-ent">configMapKeyRef</span>:
+                  <span class="pl-ent">name</span>: <span class="pl-s">mariadb</span>
+                  <span class="pl-ent">key</span>: <span class="pl-s">mysql_password</span>
+            - <span class="pl-ent">name</span>: <span class="pl-s">MYSQL_DATABASE</span>
+              <span class="pl-ent">valueFrom</span>:
+                <span class="pl-ent">configMapKeyRef</span>:
+                  <span class="pl-ent">name</span>: <span class="pl-s">mariadb</span>
+                  <span class="pl-ent">key</span>: <span class="pl-s">basededatos</span></pre>
+</div>
+<p>Observamos como al indicar las variables de entorno (sección <code>env</code>) seguimos indicado el nombre (<code>name</code>) pero el valor se indica con una clave de un ConfigMap (<code>valueFrom: - configMapKeyRef:</code>), para ello se indica el nombre del ConfigMap (<code>name</code>) y el valor que tiene una determinada clave (<code>key</code>). De esta manera, no guardamos en los ficheros yaml los valores específicos de las variables de entorno, y además, estos valores se pueden reutilizar para otros despliegues, por ejemplo, al desplegar un CMS indicar los mismos valores para las credenciales de acceso a la base de datos.</p></div>
+</div>
+</div>
+</article>
+<article class="iDevice_wrapper textIdevice em_iDevice em_iDevice_reproduccion" id="id10">
+<div class="iDevice emphasis1" >
+<header class="iDevice_header"><h1 class="iDeviceTitle">Vídeo: ConfigMaps</h1></header>
+<div class="iDevice_inner">
+<div class="iDevice_content_wrapper">
+<div id="ta10_125_2" class="block iDevice_content">
+<div class="exe-text"><figure class="exe-figure exe-media position-center" style="width: 800px;"><iframe width="800" height="449" src="https://www.youtube.com/embed/QVC9TsHpXvc" allowfullscreen="allowfullscreen" data-mce-fragment="1"></iframe>
+<figcaption class="figcaption"><span class="title"><em>Vídeo: ConfigMaps</em></span></figcaption>
+</figure>
+<p></p></div>
+</div>
+</div>
+</div>
+</div>
+</article>
+<div id="packageLicense" class="cc cc-by-sa">
+<p><span>Obra publicada con</span> <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Licencia Creative Commons Reconocimiento Compartir igual 4.0</a></p>
+</div>
+</section>
+</div>
+<div id='bottomPagination'>
+<nav class="pagination noprt">
+<a href="variables_de_entorno.html" class="prev"><span><span>&laquo; </span>Anterior</span></a> <span class="sep">| </span><a href="secrets.html" class="next"><span>Siguiente<span> &raquo;</span></span></a>
+</nav>
+</div>
+</div>
+<p id="made-with-eXe"><a href="https://exelearning.net/" target="_blank" rel="noopener"><span>Creado con eXeLearning<span> (Ventana nueva)</span></span></a></p><script type="text/javascript" src="_intef_js.js"></script></body></html>

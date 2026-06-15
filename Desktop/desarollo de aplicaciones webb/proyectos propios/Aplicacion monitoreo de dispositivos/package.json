@@ -1,0 +1,11 @@
+{
+  "name": "aplicacion-monitoreo",
+  "version": "1.0.0",
+  "description": "Sistema de monitoreo de red",
+  "scripts": {
+    "build:css": "tailwindcss -i ./src/input.css -o ./public/css/styles.css --minify"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.3.0"
+  }
+}

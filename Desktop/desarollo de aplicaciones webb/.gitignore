@@ -1,0 +1,3 @@
+.codeium/
+*.sqlite
+.env

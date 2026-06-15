@@ -1,0 +1,249 @@
+<?php
+// Archivo index.php con formulario para datos del usuario
+session_start();
+
+// Obtener el número máximo de personas sin aprobación desde la base de datos
+$max_personas_sin_aprobacion = 4; // Valor por defecto
+try {
+    $pdo = new PDO('mysql:host=localhost;dbname=restaurante_reservas', 'root', '', [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+    ]);
+    $stmt = $pdo->query("SELECT max_personas_sin_aprobacion FROM configuracion WHERE id = 1");
+    $config = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($config) {
+        $max_personas_sin_aprobacion = $config['max_personas_sin_aprobacion'];
+    }
+} catch (PDOException $e) {
+    // Silenciar error y usar valor por defecto
+}
+
+// Procesar el formulario cuando se envía
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Validar y recoger los datos del usuario
+    $nombre = isset($_POST['nombre']) ? trim($_POST['nombre']) : '';
+    $email = isset($_POST['email']) ? trim($_POST['email']) : '';
+    $telefono = isset($_POST['telefono']) ? trim($_POST['telefono']) : '';
+    $num_personas = isset($_POST['num_personas']) ? (int)$_POST['num_personas'] : 0;
+    $tiene_alergenos = isset($_POST['tiene_alergenos']) ? true : false;
+    $alergenos = isset($_POST['alergenos']) ? trim($_POST['alergenos']) : '';
+    $tiene_necesidades = isset($_POST['tiene_necesidades']) ? true : false;
+    $necesidades_especiales = isset($_POST['necesidades_especiales']) ? trim($_POST['necesidades_especiales']) : '';
+    
+    // Validación básica
+    $errores = [];
+    
+    if (empty($nombre)) {
+        $errores['nombre'] = 'El nombre es obligatorio';
+    }
+    
+    if (empty($email)) {
+        $errores['email'] = 'El email es obligatorio';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errores['email'] = 'El formato del email no es válido';
+    }
+    
+    if (empty($telefono)) {
+        $errores['telefono'] = 'El teléfono es obligatorio';
+    } elseif (!preg_match('/^[0-9]{9}$/', $telefono)) {
+        $errores['telefono'] = 'El teléfono debe tener 9 dígitos';
+    }
+    
+    if ($num_personas <= 0) {
+        $errores['num_personas'] = 'El número de personas debe ser al menos 1';
+    }
+    
+    // Si no hay errores, guardar los datos en la sesión y redirigir a la página de reserva
+    if (empty($errores)) {
+        // Guardar datos en variables de sesión individuales para compatibilidad con reserva.php
+        $_SESSION['nombre'] = $nombre;
+        $_SESSION['email'] = $email;
+        $_SESSION['telefono'] = $telefono;
+        $_SESSION['num_personas'] = $num_personas;
+        $_SESSION['tiene_alergenos'] = $tiene_alergenos;
+        $_SESSION['alergenos'] = $alergenos;
+        $_SESSION['tiene_necesidades'] = $tiene_necesidades;
+        $_SESSION['necesidades_especiales'] = $necesidades_especiales;
+        
+        // Redirigir a la página de reserva
+        header('Location: reserva.php');
+        exit;
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Datos de Usuario - Sistema de Reservas de Restaurantes</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .error-message {
+            color: #b91c1c;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+    </style>
+    <script>
+        // Función para mostrar/ocultar el área de texto de alérgenos
+        function toggleAlergenos() {
+            const checkbox = document.getElementById('tiene_alergenos');
+            const container = document.getElementById('alergenos_container');
+            
+            if (checkbox.checked) {
+                container.style.display = 'block';
+            } else {
+                container.style.display = 'none';
+            }
+        }
+        
+        // Función para mostrar/ocultar el área de texto de necesidades especiales
+        function toggleNecesidades() {
+            const checkbox = document.getElementById('tiene_necesidades');
+            const container = document.getElementById('necesidades_container');
+            
+            if (checkbox.checked) {
+                container.style.display = 'block';
+            } else {
+                container.style.display = 'none';
+            }
+        }
+        
+        // Inicializar los estados cuando se carga la página
+        document.addEventListener('DOMContentLoaded', function() {
+            // Asegurar que los contenedores estén en el estado correcto al cargar la página
+            toggleAlergenos();
+            toggleNecesidades();
+        });
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="bg-blue-600 text-white rounded-lg shadow-lg p-6 mb-8">
+            <h1 class="text-3xl font-bold">Sistema de Reservas de Restaurantes</h1>
+            <p class="mt-2">Introduce tus datos para comenzar la reserva</p>
+        </header>
+
+        <main class="mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6">Datos del Cliente</h2>
+                
+                <?php if (isset($errores) && !empty($errores)): ?>
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6" role="alert">
+                    <p class="font-bold">Por favor, corrige los siguientes errores:</p>
+                    <ul class="list-disc pl-5">
+                        <?php foreach ($errores as $error): ?>
+                            <li><?php echo $error; ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+                <?php endif; ?>
+                
+                <form method="POST" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" class="space-y-6">
+                    <div class="form-group">
+                        <label for="nombre" class="block text-sm font-medium text-gray-700 mb-1">Nombre completo *</label>
+                        <input type="text" id="nombre" name="nombre" value="<?php echo isset($nombre) ? htmlspecialchars($nombre) : ''; ?>" 
+                               class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                               placeholder="Introduce tu nombre completo" required>
+                        <?php if (isset($errores['nombre'])): ?>
+                            <p class="error-message"><?php echo $errores['nombre']; ?></p>
+                        <?php endif; ?>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                        <input type="email" id="email" name="email" value="<?php echo isset($email) ? htmlspecialchars($email) : ''; ?>" 
+                               class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                               placeholder="ejemplo@correo.com" required>
+                        <?php if (isset($errores['email'])): ?>
+                            <p class="error-message"><?php echo $errores['email']; ?></p>
+                        <?php endif; ?>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="telefono" class="block text-sm font-medium text-gray-700 mb-1">Teléfono *</label>
+                        <input type="tel" id="telefono" name="telefono" value="<?php echo isset($telefono) ? htmlspecialchars($telefono) : ''; ?>" 
+                               class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                               placeholder="Introduce tu número de teléfono" required>
+                        <?php if (isset($errores['telefono'])): ?>
+                            <p class="error-message"><?php echo $errores['telefono']; ?></p>
+                        <?php endif; ?>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="num_personas" class="block text-sm font-medium text-gray-700 mb-1">Número de personas *</label>
+                        <input type="number" id="num_personas" name="num_personas" min="1" 
+                               value="<?php echo isset($num_personas) ? htmlspecialchars($num_personas) : ''; ?>"
+                               class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                               placeholder="Introduce el número de personas" required>
+                        <?php if (isset($errores['num_personas'])): ?>
+                            <p class="error-message"><?php echo $errores['num_personas']; ?></p>
+                        <?php endif; ?>
+                        <p class="text-sm text-gray-500 mt-1">Nota: Las reservas para más de <?php echo $max_personas_sin_aprobacion; ?> personas requieren confirmación por parte del restaurante.</p>
+                    </div>
+                    
+                    <div class="form-group">
+        <div class="flex items-start">
+            <div class="flex items-center h-5">
+                <input id="tiene_alergenos" name="tiene_alergenos" type="checkbox" 
+                       class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                       <?php echo (isset($tiene_alergenos) && $tiene_alergenos) ? 'checked' : ''; ?>
+                       onchange="toggleAlergenos()">
+            </div>
+            <div class="ml-3 text-sm">
+                <label for="tiene_alergenos" class="font-medium text-gray-700">Tengo alérgenos o intolerancias alimentarias</label>
+                <p class="text-gray-500">Marca esta casilla si alguno de los comensales tiene alguna alergia o intolerancia alimentaria.</p>
+            </div>
+        </div>
+        
+        <!-- Área de texto para alérgenos (inicialmente oculta) -->
+        <div id="alergenos_container" class="mt-3" style="display: <?php echo (isset($tiene_alergenos) && $tiene_alergenos) ? 'block' : 'none'; ?>">
+            <textarea id="alergenos" name="alergenos" rows="3" 
+                      class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                      placeholder="Describe los alérgenos o intolerancias alimentarias"><?php echo isset($_POST['alergenos']) ? htmlspecialchars($_POST['alergenos']) : ''; ?></textarea>
+            <p class="text-sm text-gray-500 mt-1">Ejemplo: Alergia a frutos secos, intolerancia a la lactosa, celiaquía, etc.</p>
+        </div>
+    </div>
+    
+    <div class="form-group">
+        <div class="flex items-start">
+            <div class="flex items-center h-5">
+                <input id="tiene_necesidades" name="tiene_necesidades" type="checkbox" 
+                       class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                       <?php echo (isset($tiene_necesidades) && $tiene_necesidades) ? 'checked' : ''; ?>
+                       onchange="toggleNecesidades()">
+            </div>
+            <div class="ml-3 text-sm">
+                <label for="tiene_necesidades" class="font-medium text-gray-700">Tengo necesidades especiales</label>
+                <p class="text-gray-500">Marca esta casilla si alguno de los comensales tiene alguna necesidad especial.</p>
+            </div>
+        </div>
+        
+        <!-- Área de texto para necesidades especiales (inicialmente oculta) -->
+        <div id="necesidades_container" class="mt-3" style="display: <?php echo (isset($tiene_necesidades) && $tiene_necesidades) ? 'block' : 'none'; ?>">
+            <textarea id="necesidades_especiales" name="necesidades_especiales" rows="3" 
+                      class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                      placeholder="Describe las necesidades especiales"><?php echo isset($necesidades_especiales) ? htmlspecialchars($necesidades_especiales) : ''; ?></textarea>
+            <p class="text-sm text-gray-500 mt-1">Ejemplo: Necesidad de silla para bebé, acceso para silla de ruedas, etc.</p>
+        </div>
+    </div>                </div>
+                    
+                    <div class="text-center">
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-lg transition duration-300">
+                            Continuar con la reserva
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </main>
+        
+        <footer class="text-center text-gray-500 text-sm">
+            <p>&copy; <?php echo date('Y'); ?> Sistema de Reservas de Restaurantes</p>
+        </footer>
+    </div>
+</body>
+</html>

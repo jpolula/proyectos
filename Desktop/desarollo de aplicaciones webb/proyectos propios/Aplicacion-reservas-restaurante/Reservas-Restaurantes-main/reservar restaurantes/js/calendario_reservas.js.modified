@@ -1,0 +1,582 @@
+/**
+ * calendario_reservas.js
+ * Script para gestionar el calendario y las reservas del restaurante
+ */
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Elementos del DOM
+    const fechaInput = document.getElementById('fecha');
+    const zonaContainer = document.getElementById('zonaContainer');
+    const turnoContainer = document.getElementById('turnoContainer');
+    const confirmarBtn = document.getElementById('confirmarBtn');
+    const mensajeError = document.getElementById('mensajeError');
+    const textoError = document.getElementById('textoError');
+    
+    // Variables para almacenar selecciones
+    let fechaSeleccionada = '';
+    let zonaSeleccionada = '';
+    let turnoSeleccionado = '';
+    
+    // Obtener el número de personas de la sesión
+    let numPersonas = 0;
+    
+    // Intentar obtener el número de personas de la URL (si se pasa como parámetro)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('num_personas')) {
+        numPersonas = parseInt(urlParams.get('num_personas')) || 0;
+    }
+    
+    // Si no está en la URL, intentar obtenerlo del sessionStorage
+    if (numPersonas <= 0) {
+        numPersonas = parseInt(sessionStorage.getItem('num_personas')) || 0;
+    }
+    
+    console.log(`👥 Número de personas para la reserva: ${numPersonas}`);
+    
+    // Instancia de Flatpickr
+    let flatpickrInstance = null;
+    
+    // Horas disponibles por turno (predefinidas)
+    const horasPorTurno = {
+        mediodia: ["13:00", "13:30", "14:00", "14:30", "15:00", "15:30"],
+        noche: ["20:00", "20:30", "21:00", "21:30", "22:00", "22:30"]
+    };
+    
+    /**
+     * Función para cargar los días disponibles desde el servidor
+     */
+    function cargarDiasDisponibles() {
+        console.log('📅 Iniciando carga de días disponibles...');
+        
+        // Mostrar mensaje de carga
+        if (fechaInput) {
+            fechaInput.placeholder = "Cargando disponibilidad...";
+        }
+        
+        // Parámetro para evitar caché
+        const timestamp = Date.now();
+        
+        // Realizar la petición AJAX
+        fetch(`consultar_dias_disponibles.php?modo=dias&nocache=${timestamp}`)
+            .then(response => {
+                console.log('📡 Respuesta recibida del servidor');
+                return response.json();
+            })
+            .then(data => {
+                console.log('Respuesta completa del servidor:', data);
+                
+                if (data.success && data.dias && data.dias.length > 0) {
+                    console.log(`✅ Se encontraron ${data.dias.length} días disponibles`);
+                    console.log('Días disponibles:', data.dias);
+                    
+                    // Convertir fechas a formato d/m/Y para Flatpickr
+                    const fechasDisponibles = data.dias.map(dia => {
+                        const fecha = new Date(dia.fecha + 'T00:00:00');
+                        return formatearFecha(fecha);
+                    });
+                    
+                    console.log('📅 Fechas disponibles formateadas:', fechasDisponibles);
+                    
+                    // Inicializar calendario con las fechas disponibles
+                    inicializarCalendario(fechasDisponibles);
+                } else {
+                    console.error('❌ No se encontraron días disponibles o hay un problema con la respuesta');
+                    console.log('Respuesta del servidor:', data);
+                    
+                    // Usar fechas de respaldo para los próximos 12 meses
+                    const fechasRespaldo = generarFechasRespaldo();
+                    console.log('Usando fechas de respaldo:', fechasRespaldo);
+                    inicializarCalendario(fechasRespaldo);
+                }
+                
+                // Restaurar placeholder
+                if (fechaInput) {
+                    fechaInput.placeholder = "Selecciona una fecha";
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error al cargar días disponibles:', error);
+                mostrarError('Error al cargar los días disponibles. Se usarán fechas de respaldo para los próximos 12 meses.');
+                
+                // Usar fechas de respaldo para los próximos 12 meses
+                const fechasRespaldo = generarFechasRespaldo();
+                inicializarCalendario(fechasRespaldo);
+                
+                // Restaurar placeholder
+                if (fechaInput) {
+                    fechaInput.placeholder = "Selecciona una fecha";
+                }
+            });
+    }
+    
+    /**
+     * Función para formatear fecha a formato d/m/Y
+     */
+    function formatearFecha(fecha) {
+        // Si es una cadena, convertirla a objeto Date
+        if (typeof fecha === 'string') {
+            // Si ya está en formato d/m/Y, devolverla tal cual
+            if (fecha.includes('/')) {
+                return fecha;
+            }
+            
+            // Si la fecha está en formato Y-m-d, convertirla a d/m/Y
+            const partes = fecha.split('-');
+            if (partes.length === 3) {
+                return `${partes[2]}/${partes[1]}/${partes[0]}`;
+            }
+            
+            return fecha;
+        }
+        
+        // Asegurarse de que sea un objeto Date válido
+        if (!(fecha instanceof Date) || isNaN(fecha)) {
+            console.error('❌ Fecha inválida:', fecha);
+            return '';
+        }
+        
+        const dia = String(fecha.getDate()).padStart(2, '0');
+        const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+        const anio = fecha.getFullYear();
+        return `${dia}/${mes}/${anio}`;
+    }
+    
+    /**
+     * Función para generar fechas de respaldo para los próximos 12 meses
+     */
+    function generarFechasRespaldo() {
+        const fechas = [];
+        const fechaActual = new Date();
+        const anioActual = fechaActual.getFullYear();
+        const mesActual = fechaActual.getMonth();
+        
+        for (let mes = mesActual; mes < mesActual + 12; mes++) {
+            const anio = mes < 12 ? anioActual : anioActual + 1;
+            const diasEnMes = new Date(anio, mes + 1, 0).getDate();
+            
+            for (let dia = 1; dia <= diasEnMes; dia++) {
+                const fecha = new Date(anio, mes, dia);
+                fechas.push(formatearFecha(fecha));
+            }
+        }
+        
+        return fechas;
+    }
+    
+    /**
+     * Función para inicializar/reinicializar el calendario
+     */
+    function inicializarCalendario(fechasHabilitadas) {
+        console.log('🔄 Inicializando calendario con', fechasHabilitadas.length, 'fechas disponibles');
+        
+        // Destruir instancia previa si existe
+        if (flatpickrInstance) {
+            console.log('🔄 Destruyendo instancia anterior de Flatpickr');
+            flatpickrInstance.destroy();
+        }
+        
+        if (!fechaInput) {
+            console.error('❌ No se encontró el elemento de entrada de fecha');
+            return;
+        }
+        
+        // Asegurarse de que todas las fechas estén correctamente formateadas
+        const fechasFormateadas = fechasHabilitadas.map(fecha => {
+            // Si la fecha ya está en formato d/m/Y, devolverla tal cual
+            if (fecha.includes('/')) {
+                return fecha;
+            }
+            
+            // Si la fecha está en formato Y-m-d, convertirla a d/m/Y
+            const partes = fecha.split('-');
+            if (partes.length === 3) {
+                return `${partes[2]}/${partes[1]}/${partes[0]}`;
+            }
+            
+            return fecha;
+        });
+        
+        console.log('📅 Fechas formateadas para Flatpickr:', fechasFormateadas);
+        
+        // Crear nueva instancia de Flatpickr
+        flatpickrInstance = flatpickr(fechaInput, {
+            locale: "es",
+            dateFormat: "d/m/Y",
+            minDate: "2025-01-01", // Cambiado para permitir fechas desde enero 2025
+            maxDate: "2026-12-31", // Extendido hasta finales de 2026 para permitir reservas con antelación
+            inline: true,
+            disableMobile: true,
+            enable: fechasFormateadas,
+            showMonths: 1, // Mostrar solo un mes a la vez
+            monthSelectorType: "dropdown", // Usar un desplegable para seleccionar el mes
+            yearRange: "2025:2026", // Rango de años disponibles
+            static: true, // Mantener el calendario siempre visible
+            shorthandCurrentMonth: false, // Mostrar nombre completo del mes
+            showDaysInNextAndPreviousMonths: false, // No mostrar días de meses adyacentes
+            fixedHeight: true, // Altura fija para evitar saltos
+            nextArrow: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>',
+            prevArrow: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
+            onChange: function(selectedDates, dateStr) {
+                if (selectedDates.length > 0) {
+                    fechaSeleccionada = dateStr;
+                    console.log('🗓️ Fecha seleccionada:', fechaSeleccionada);
+                    mostrarTurnos();
+                    validarFormulario();
+                }
+            },
+            onReady: function() {
+                console.log('✅ Flatpickr inicializado correctamente');
+                
+                // Aplicar estilos a los días disponibles inmediatamente y después de un retraso
+                aplicarEstilosCalendario();
+                setTimeout(aplicarEstilosCalendario, 100);
+                setTimeout(aplicarEstilosCalendario, 500);
+            },
+            onMonthChange: function() {
+                // Re-aplicar estilos cuando cambia el mes
+                aplicarEstilosCalendario();
+                setTimeout(aplicarEstilosCalendario, 100);
+                setTimeout(aplicarEstilosCalendario, 500);
+            },
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                // Verificar si este día está habilitado
+                const fechaFormateada = dayElem.dateObj ? formatearFecha(dayElem.dateObj) : '';
+                if (fechasFormateadas.includes(fechaFormateada)) {
+                    dayElem.classList.add('available');
+                    dayElem.style.pointerEvents = 'auto';
+                    dayElem.style.cursor = 'pointer';
+                    console.log(`📅 Día creado y marcado como disponible: ${fechaFormateada}`);
+                    
+                    // Añadir evento de clic manualmente para asegurar que funcione
+                    dayElem.addEventListener('click', function() {
+                        console.log(`🖱️ Clic en día: ${fechaFormateada}`);
+                        fechaSeleccionada = fechaFormateada;
+                        fechaInput.value = fechaFormateada;
+                        mostrarTurnos();
+                        validarFormulario();
+                    });
+                }
+            }
+        });
+    }
+    
+    /**
+     * Función para aplicar estilos al calendario después de inicializarlo
+     */
+    function aplicarEstilosCalendario() {
+        console.log('🎨 Aplicando estilos al calendario');
+        
+        // Obtener el contenedor del calendario
+        const calendarContainer = document.querySelector('.flatpickr-calendar');
+        if (!calendarContainer) {
+            console.error('❌ No se encontró el contenedor del calendario');
+            return;
+        }
+        
+        // Añadir clase personalizada al contenedor
+        calendarContainer.classList.add('calendario-reservas');
+        
+        // Mejorar estilos de los selectores de mes y año
+        const monthSelect = document.querySelector('.flatpickr-monthDropdown-months');
+        const yearInput = document.querySelector('.numInputWrapper input');
+        
+        if (monthSelect) {
+            monthSelect.classList.add('mes-selector');
+            monthSelect.style.fontWeight = 'bold';
+            monthSelect.style.fontSize = '1rem';
+            monthSelect.style.padding = '4px 8px';
+            monthSelect.style.borderRadius = '4px';
+            monthSelect.style.border = '1px solid #e2e8f0';
+            monthSelect.style.backgroundColor = '#f8fafc';
+        }
+        
+        if (yearInput) {
+            yearInput.style.fontWeight = 'bold';
+            yearInput.style.fontSize = '1rem';
+            yearInput.style.padding = '4px 8px';
+            yearInput.style.borderRadius = '4px';
+            yearInput.style.border = '1px solid #e2e8f0';
+            yearInput.style.backgroundColor = '#f8fafc';
+            yearInput.style.width = '5rem';
+            yearInput.style.textAlign = 'center';
+        }
+        
+        // Ocultar días de otros meses
+        const diasOtrosMeses = document.querySelectorAll('.flatpickr-day.prevMonthDay, .flatpickr-day.nextMonthDay');
+        diasOtrosMeses.forEach(dia => {
+            dia.style.visibility = 'hidden';
+            dia.style.pointerEvents = 'none';
+        });
+        
+        // Estilizar días disponibles
+        const diasDisponibles = document.querySelectorAll('.flatpickr-day.available');
+        diasDisponibles.forEach(dia => {
+            dia.style.backgroundColor = '#e6f7ff';
+            dia.style.borderColor = '#bae7ff';
+            dia.style.color = '#0066cc';
+            dia.style.fontWeight = 'bold';
+        });
+        
+        // Estilizar día seleccionado
+        const diaSeleccionado = document.querySelector('.flatpickr-day.selected');
+        if (diaSeleccionado) {
+            diaSeleccionado.style.backgroundColor = '#1890ff';
+            diaSeleccionado.style.borderColor = '#1890ff';
+            diaSeleccionado.style.color = 'white';
+        }
+        
+        console.log('✅ Estilos aplicados correctamente');
+    }
+    
+    /**
+     * Función para mostrar un mensaje de error
+     */
+    function mostrarError(mensaje) {
+        if (textoError && mensajeError) {
+            textoError.textContent = mensaje;
+            mensajeError.classList.remove('hidden');
+            
+            // Hacer scroll al mensaje de error
+            mensajeError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Ocultar el mensaje después de 8 segundos
+            setTimeout(() => {
+                ocultarError();
+            }, 8000);
+        } else {
+            // Fallback a alert si no se encuentran los elementos
+            console.error('No se encontraron los elementos para mostrar el error');
+            alert(mensaje);
+        }
+    }
+    
+    /**
+     * Función para ocultar el mensaje de error
+     */
+    function ocultarError() {
+        if (mensajeError) {
+            mensajeError.classList.add('hidden');
+        }
+    }
+    
+    /**
+     * Función para verificar si hay aforo disponible para una fecha, zona y turno
+     */
+    function verificarAforo(fecha, turno, zona) {
+        return new Promise((resolve, reject) => {
+            console.log(`🔍 Verificando aforo para fecha: ${fecha}, turno: ${turno}, zona: ${zona}, personas: ${numPersonas}`);
+            
+            // Si no tenemos el número de personas, no podemos verificar
+            if (numPersonas <= 0) {
+                console.warn('⚠️ No se puede verificar el aforo sin el número de personas');
+                resolve(true); // Permitir continuar por defecto
+                return;
+            }
+            
+            // Realizar la petición AJAX para verificar el aforo
+            fetch(`verificar_aforo.php?fecha=${encodeURIComponent(fecha)}&turno=${encodeURIComponent(turno)}&zona=${encodeURIComponent(zona)}&num_personas=${numPersonas}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('📊 Respuesta de verificación de aforo:', data);
+                    
+                    if (data.success) {
+                        if (data.disponible) {
+                            console.log('✅ Hay suficiente aforo disponible');
+                            resolve(true);
+                        } else {
+                            console.warn('❌ No hay suficiente aforo disponible');
+                            resolve(false);
+                        }
+                    } else {
+                        console.error('❌ Error al verificar el aforo:', data.mensaje);
+                        // En caso de error, permitir continuar
+                        resolve(true);
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Error al verificar el aforo:', error);
+                    // En caso de error, permitir continuar
+                    resolve(true);
+                });
+        });
+    }
+    
+    /**
+     * Función para mostrar los turnos disponibles
+     */
+    function mostrarTurnos() {
+        if (!turnoContainer) return;
+        
+        console.log('👁️ Mostrando sección de turnos');
+        turnoContainer.style.display = 'block';
+        
+        // Limpiar selección previa
+        document.querySelectorAll('input[name="turno"]').forEach(radio => {
+            radio.checked = false;
+        });
+        
+        // Ocultar paso siguiente
+        if (zonaContainer) zonaContainer.style.display = 'none';
+        
+        // Restablecer variable
+        turnoSeleccionado = '';
+        zonaSeleccionada = '';
+        
+        // Desactivar botón de confirmar
+        if (confirmarBtn) confirmarBtn.disabled = true;
+    }
+    
+    /**
+     * Función para mostrar las opciones de zona
+     */
+    function mostrarZonas() {
+        if (!zonaContainer) return;
+        
+        console.log('👁️ Mostrando sección de zonas');
+        
+        // Ocultar mensaje de error previo
+        ocultarError();
+        
+        // Para cada zona, verificar si hay aforo disponible con el turno seleccionado
+        const zonas = ['dentro', 'fuera'];
+        let hayAlgunaZonaDisponible = false;
+        
+        // Desactivar todas las zonas inicialmente
+        document.querySelectorAll('input[name="zona"]').forEach(zonaRadio => {
+            const zonaLabel = zonaRadio.parentElement;
+            zonaRadio.disabled = true;
+            zonaLabel.classList.add('opacity-50');
+        });
+        
+        // Verificar cada zona
+        Promise.all(zonas.map(zona => {
+            return verificarAforo(fechaSeleccionada, turnoSeleccionado, zona)
+                .then(disponible => {
+                    // Activar o desactivar la zona según disponibilidad
+                    const zonaRadio = document.querySelector(`input[name="zona"][value="${zona}"]`);
+                    if (zonaRadio) {
+                        const zonaLabel = zonaRadio.parentElement;
+                        
+                        if (disponible) {
+                            zonaRadio.disabled = false;
+                            zonaLabel.classList.remove('opacity-50');
+                            hayAlgunaZonaDisponible = true;
+                        } else {
+                            zonaRadio.disabled = true;
+                            zonaLabel.classList.add('opacity-50');
+                        }
+                    }
+                    return disponible;
+                });
+        })).then(() => {
+            // Mostrar las zonas solo si hay al menos una disponible
+            if (hayAlgunaZonaDisponible) {
+                zonaContainer.style.display = 'block';
+            } else {
+                mostrarError(`No hay disponibilidad para ${numPersonas} personas en la fecha y turno seleccionados.`);
+            }
+        });
+        
+        // Desactivar botón de confirmar
+        if (confirmarBtn) confirmarBtn.disabled = true;
+    }
+    
+    /**
+     * Configurar listeners de eventos
+     */
+    function configurarEventListeners() {
+        console.log('🔄 Configurando listeners de eventos');
+        
+        // Listener para selección de turno
+        document.querySelectorAll('input[name="turno"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                turnoSeleccionado = this.value;
+                console.log('🕒 Turno seleccionado:', turnoSeleccionado);
+                
+                // Verificar aforo antes de mostrar las zonas
+                if (fechaSeleccionada && turnoSeleccionado) {
+                    mostrarZonas();
+                }
+                
+                validarFormulario();
+            });
+        });
+        
+        // Listener para selección de zona
+        document.querySelectorAll('input[name="zona"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                zonaSeleccionada = this.value;
+                console.log('🏠 Zona seleccionada:', zonaSeleccionada);
+                validarFormulario();
+            });
+        });
+        
+        // Event listener para el formulario
+        const formulario = document.getElementById('reservaForm');
+        if (formulario) {
+            formulario.addEventListener('submit', function(e) {
+                if (!confirmarBtn || confirmarBtn.disabled) {
+                    e.preventDefault();
+                    mostrarError('Por favor, complete todos los campos antes de confirmar la reserva.');
+                    return false;
+                }
+                
+                // Verificar una última vez el aforo antes de enviar
+                if (fechaSeleccionada && turnoSeleccionado && zonaSeleccionada) {
+                    e.preventDefault(); // Detener el envío momentáneamente
+                    
+                    verificarAforo(fechaSeleccionada, turnoSeleccionado, zonaSeleccionada)
+                        .then(disponible => {
+                            if (disponible) {
+                                // Si hay disponibilidad, enviar el formulario
+                                formulario.submit();
+                            } else {
+                                mostrarError('Lo sentimos, ya no hay disponibilidad para la selección realizada. Por favor, elija otra opción.');
+                            }
+                        });
+                    
+                    return false;
+                }
+                
+                return true;
+            });
+        }
+    }
+    
+    /**
+     * Función para validar el formulario
+     */
+    function validarFormulario() {
+        if (!confirmarBtn) return;
+        
+        const fechaValida = fechaInput && fechaInput.value;
+        const turnoValido = document.querySelector('input[name="turno"]:checked');
+        const zonaValida = document.querySelector('input[name="zona"]:checked');
+        
+        // Habilitar botón solo si todos los campos están seleccionados
+        confirmarBtn.disabled = !(fechaValida && turnoValido && zonaValida);
+        
+        // Cambiar apariencia según estado
+        if (!confirmarBtn.disabled) {
+            confirmarBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            confirmarBtn.classList.add('hover:bg-blue-700');
+        } else {
+            confirmarBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            confirmarBtn.classList.remove('hover:bg-blue-700');
+        }
+    }
+    
+    // Inicializar el sistema
+    function inicializar() {
+        console.log('🚀 Inicializando sistema de reservas...');
+        
+        // Configurar los event listeners
+        configurarEventListeners();
+        
+        // Cargar días disponibles al iniciar
+        cargarDiasDisponibles();
+    }
+    
+    // Iniciar el sistema
+    inicializar();
+});

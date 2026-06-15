@@ -1,0 +1,154 @@
+2025-04-08 11:06:47 - Iniciando daemon de monitoreo...
+
+2025-04-08 11:06:47 - Configuración cargada correctamente
+
+2025-04-08 11:06:47 - Intervalo de monitoreo configurado: 60 segundos
+
+
+2025-04-08 11:06:47 - Verificando oeuheougguoeguegou (192.168.100.133)...
+
+2025-04-08 11:06:53 - ❌ Estado: CAÍDO
+
+2025-04-08 11:06:53 - 
+
+2025-04-08 11:06:53 - Verificando ROUTER PRINCIPAL (192.168.1.1)...
+
+2025-04-08 11:06:54 - ✅ Estado: ACTIVO
+
+2025-04-08 11:06:54 - 
+
+2025-04-08 11:06:54 - Verificando Ceragon Jabalcon (192.168.1.7)...
+
+2025-04-08 11:06:55 - ✅ Estado: ACTIVO
+
+2025-04-08 11:06:55 - 
+
+2025-04-08 11:06:55 - === Resumen de la Red ===
+
+2025-04-08 11:06:55 - Total de dispositivos: 3
+
+2025-04-08 11:06:55 - Dispositivos activos: 2
+
+2025-04-08 11:06:55 - Dispositivos caídos: 1
+
+2025-04-08 11:06:55 - Salud de la red: 66.67%
+
+2025-04-08 11:06:55 - 
+Enviando notificación inicial a Telegram...
+
+2025-04-08 11:06:55 - ❌ Error al enviar la notificación
+
+2025-04-08 11:06:55 - 
+Esperando 60 segundos para la próxima verificación...
+
+2025-04-08 11:07:52 - Iniciando daemon de monitoreo...
+
+2025-04-08 11:07:52 - Configuración cargada correctamente
+
+2025-04-08 11:07:52 - Intervalo de monitoreo configurado: 60 segundos
+
+
+2025-04-08 11:07:52 - Verificando oeuheougguoeguegou (192.168.100.133)...
+
+2025-04-08 11:07:57 - ❌ Estado: CAÍDO
+
+2025-04-08 11:07:57 - 
+
+2025-04-08 11:07:57 - Verificando ROUTER PRINCIPAL (192.168.1.1)...
+
+2025-04-08 11:07:58 - ✅ Estado: ACTIVO
+
+2025-04-08 11:07:58 - 
+
+2025-04-08 11:07:58 - Verificando Ceragon Jabalcon (192.168.1.7)...
+
+2025-04-08 11:07:59 - ✅ Estado: ACTIVO
+
+2025-04-08 11:07:59 - 
+
+2025-04-08 11:07:59 - === Resumen de la Red ===
+
+2025-04-08 11:07:59 - Total de dispositivos: 3
+
+2025-04-08 11:07:59 - Dispositivos activos: 2
+
+2025-04-08 11:07:59 - Dispositivos caídos: 1
+
+2025-04-08 11:07:59 - Salud de la red: 66.67%
+
+2025-04-08 11:07:59 - 
+Enviando notificación inicial a Telegram...
+
+2025-04-08 11:07:59 - ❌ Error al enviar la notificación
+
+2025-04-08 11:07:59 - 
+Esperando 60 segundos para la próxima verificación...
+
+2025-04-08 11:08:59 - 
+Iniciando nueva verificación...
+
+2025-04-08 11:08:59 - Verificando oeuheougguoeguegou (192.168.100.133)...
+
+2025-04-08 11:09:03 - Verificando ROUTER PRINCIPAL (192.168.1.1)...
+
+2025-04-08 11:09:03 - Verificando Ceragon Jabalcon (192.168.1.7)...
+
+2025-04-08 11:09:03 - 
+Enviando recordatorio de dispositivos caídos a Telegram...
+
+2025-04-08 11:09:03 - ❌ Error al enviar la notificación
+
+2025-04-08 11:09:03 - 
+Esperando 60 segundos para la próxima verificación...
+
+2025-04-08 11:10:03 - 
+Iniciando nueva verificación...
+
+2025-04-08 11:10:03 - Verificando oeuheougguoeguegou (192.168.100.133)...
+
+2025-04-08 11:10:07 - Verificando ROUTER PRINCIPAL (192.168.1.1)...
+
+2025-04-08 11:10:07 - Verificando Ceragon Jabalcon (192.168.1.7)...
+
+2025-04-08 11:10:07 - 
+Enviando recordatorio de dispositivos caídos a Telegram...
+
+2025-04-08 11:10:07 - ❌ Error al enviar la notificación
+
+2025-04-08 11:10:07 - 
+Esperando 60 segundos para la próxima verificación...
+
+2025-04-08 11:11:07 - 
+Iniciando nueva verificación...
+
+2025-04-08 11:11:07 - Verificando oeuheougguoeguegou (192.168.100.133)...
+
+2025-04-08 11:11:11 - Verificando ROUTER PRINCIPAL (192.168.1.1)...
+
+2025-04-08 11:11:11 - Verificando Ceragon Jabalcon (192.168.1.7)...
+
+2025-04-08 11:11:11 - 
+Enviando recordatorio de dispositivos caídos a Telegram...
+
+2025-04-08 11:11:11 - ❌ Error al enviar la notificación
+
+2025-04-08 11:11:11 - 
+Esperando 60 segundos para la próxima verificación...
+
+2025-04-08 11:12:11 - 
+Iniciando nueva verificación...
+
+2025-04-08 11:12:11 - Verificando oeuheougguoeguegou (192.168.100.133)...
+
+2025-04-08 11:12:15 - Verificando ROUTER PRINCIPAL (192.168.1.1)...
+
+2025-04-08 11:12:15 - Verificando Ceragon Jabalcon (192.168.1.7)...
+
+2025-04-08 11:12:15 - 
+Enviando recordatorio de dispositivos caídos a Telegram...
+
+2025-04-08 11:12:15 - ❌ Error al enviar la notificación
+
+2025-04-08 11:12:15 - 
+Esperando 60 segundos para la próxima verificación...
+

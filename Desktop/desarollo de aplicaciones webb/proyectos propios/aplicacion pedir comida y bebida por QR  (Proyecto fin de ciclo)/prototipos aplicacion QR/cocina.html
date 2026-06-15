@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Cocina</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f2f5; }
+        .header { background: #34495e; color: white; padding: 1rem; text-align: center; }
+        .pedidos-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; padding: 1rem; }
+        .pedido { background: white; padding: 1rem; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .pedido-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .mesa { background: #3498db; color: white; padding: 0.5rem; border-radius: 5px; }
+        .tiempo { color: #e74c3c; }
+        .items { margin-bottom: 1rem; }
+        .item { padding: 0.5rem; border-bottom: 1px solid #eee; }
+        .cantidad { font-weight: bold; color: #3498db; }
+        .btn-completado { background: #2ecc71; color: white; border: none; padding: 0.5rem 1rem; width: 100%; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Panel de Cocina</h1>
+    </div>
+
+    <div class="pedidos-container">
+        <div class="pedido">
+            <div class="pedido-header">
+                <span class="mesa">Mesa 12</span>
+                <span class="tiempo">12:35</span>
+            </div>
+            <div class="items">
+                <div class="item">
+                    <span class="cantidad">2x</span> Paella Valenciana
+                </div>
+                <div class="item">
+                    <span class="cantidad">1x</span> Patatas Bravas
+                </div>
+            </div>
+            <button class="btn-completado">Marcar como Completado</button>
+        </div>
+
+        <div class="pedido">
+            <div class="pedido-header">
+                <span class="mesa">Mesa 8</span>
+                <span class="tiempo">12:40</span>
+            </div>
+            <div class="items">
+                <div class="item">
+                    <span class="cantidad">1x</span> Solomillo
+                </div>
+                <div class="item">
+                    <span class="cantidad">2x</span> Ensalada César
+                </div>
+            </div>
+            <button class="btn-completado">Marcar como Completado</button>
+        </div>
+    </div>
+</body>
+</html>

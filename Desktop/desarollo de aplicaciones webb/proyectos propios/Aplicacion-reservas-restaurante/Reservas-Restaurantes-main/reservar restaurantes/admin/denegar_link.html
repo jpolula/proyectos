@@ -1,0 +1,18 @@
+<!-- 
+Instrucciones para implementar el enlace de denegación:
+
+1. Busca en el archivo reservas.php la sección donde se muestra el botón de "Denegar" o "Rechazar" para las reservas pendientes.
+   Normalmente estará dentro de un bucle que recorre las reservas.
+
+2. Reemplaza el formulario actual por este enlace:
+
+<a href="reservas_denegacion.php?id=<?php echo $reserva['id']; ?>" 
+   class="w-full flex items-center justify-center px-3 py-2 bg-orange-600 text-white text-sm font-medium rounded hover:bg-orange-700 transition-colors">
+   <i class="fas fa-times mr-2"></i> Denegar
+</a>
+
+3. Este enlace dirigirá a la página independiente de denegación que hemos creado, evitando los problemas de sintaxis.
+
+Nota: Si no puedes editar el archivo reservas.php debido a los errores de sintaxis, puedes crear una copia del archivo,
+hacer las modificaciones necesarias y luego reemplazar el archivo original.
+-->
